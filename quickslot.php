@@ -3,7 +3,7 @@
  * Plugin Name: QuickSlot
  * Plugin URI: https://example.com/quickslot
  * Description: Appointment booking plugin for WordPress.
- * Version: 0.1.0
+ * Version: 1.0.0
  * Requires at least: 6.0
  * Requires PHP: 8.0
  * Author: QuickSlot
@@ -19,8 +19,8 @@ if (! defined('ABSPATH')) {
 	return;
 }
 
-define('QUICKSLOT_VERSION', '0.1.0');
-define('QUICKSLOT_DB_VERSION', '0.1.0');
+define('QUICKSLOT_VERSION', '1.0.0');
+define('QUICKSLOT_DB_VERSION', '1.0.0');
 define('QUICKSLOT_FILE', __FILE__);
 define('QUICKSLOT_PATH', plugin_dir_path(__FILE__));
 define('QUICKSLOT_URL', plugin_dir_url(__FILE__));
@@ -86,4 +86,4 @@ if (! quickslot_requirements_met()) {
 	return;
 }
 
-QS_QuickSlot::get_instance()->init();
+QuickSlot::get_instance()->init();

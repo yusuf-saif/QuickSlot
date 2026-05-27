@@ -11,18 +11,18 @@ if (! defined('ABSPATH')) {
 	return;
 }
 
-final class QS_QuickSlot {
+final class QuickSlot {
 	/**
 	 * Singleton instance.
 	 *
-	 * @var QS_QuickSlot|null
+	 * @var QuickSlot|null
 	 */
-	private static ?QS_QuickSlot $instance = null;
+	private static ?QuickSlot $instance = null;
 
 	/**
 	 * Returns the singleton instance.
 	 */
-	public static function get_instance(): QS_QuickSlot {
+	public static function get_instance(): QuickSlot {
 		if (null === self::$instance) {
 			self::$instance = new self();
 		}

@@ -63,6 +63,7 @@ final class QS_Installer {
 				PRIMARY KEY  (id),
 				KEY status (status)
 			) {$charset_collate};",
+			// Stores JSON-encoded break data for the day in the breaks column.
 			"CREATE TABLE {$availability_table} (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				day_of_week tinyint(3) unsigned NOT NULL,
@@ -93,7 +94,7 @@ final class QS_Installer {
 				customer_name varchar(255) NOT NULL,
 				customer_email varchar(255) NOT NULL,
 				customer_phone varchar(50) NULL,
-				customer_notes text NULL,
+				customer_note text NULL,
 				booking_start datetime NOT NULL,
 				booking_end datetime NOT NULL,
 				timezone varchar(100) NOT NULL,
