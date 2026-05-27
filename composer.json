@@ -1,0 +1,12 @@
+{
+    "name": "quickslot/quickslot",
+    "description": "QuickSlot standalone WordPress appointment booking plugin.",
+    "type": "wordpress-plugin",
+    "license": "GPL-3.0-or-later",
+    "require": {
+        "php": ">=8.0"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
