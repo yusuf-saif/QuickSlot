@@ -5,3 +5,26 @@
 .qs-admin-page h1 {
 	margin-bottom: 12px;
 }
+
+.qs-admin-section {
+	margin-top: 32px;
+}
+
+.qs-breaks {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.qs-break-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.qs-availability-table th,
+.qs-availability-table td {
+	vertical-align: top;
+}

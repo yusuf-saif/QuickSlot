@@ -20,12 +20,21 @@ final class QS_Admin {
 	private ?QS_Services_Admin $services_admin = null;
 
 	/**
+	 * Availability admin controller.
+	 *
+	 * @var QS_Availability_Admin|null
+	 */
+	private ?QS_Availability_Admin $availability_admin = null;
+
+	/**
 	 * Registers admin hooks.
 	 */
 	public function init(): void {
 		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-services-admin.php';
+		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-availability-admin.php';
 
 		$this->services_admin = new QS_Services_Admin();
+		$this->availability_admin = new QS_Availability_Admin();
 
 		add_action('admin_menu', array($this, 'register_menu'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
@@ -116,6 +125,26 @@ final class QS_Admin {
 			array(),
 			QUICKSLOT_VERSION
 		);
+
+		if ('quickslot_page_quickslot-availability' !== $hook_suffix) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'quickslot-admin',
+			QUICKSLOT_URL . 'assets/js/quickslot-admin.js',
+			array('jquery'),
+			QUICKSLOT_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'quickslot-admin',
+			'quickslotAdmin',
+			array(
+				'removeBreakLabel' => esc_html__('Remove', 'quickslot'),
+			)
+		);
 	}
 
 	/**
@@ -156,7 +185,9 @@ final class QS_Admin {
 	 * Renders the availability placeholder page.
 	 */
 	public function render_availability_page(): void {
-		$this->render_placeholder_page(esc_html__('Availability', 'quickslot'));
+		if ($this->availability_admin instanceof QS_Availability_Admin) {
+			$this->availability_admin->render_page();
+		}
 	}
 
 	/**
