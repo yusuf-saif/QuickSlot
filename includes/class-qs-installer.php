@@ -55,7 +55,7 @@ final class QS_Installer {
 				name varchar(255) NOT NULL,
 				description text NULL,
 				duration int(11) unsigned NOT NULL DEFAULT 0,
-				price decimal(10,2) NOT NULL DEFAULT 0.00,
+				price decimal(10,2) NULL DEFAULT NULL,
 				is_paid tinyint(1) NOT NULL DEFAULT 0,
 				status varchar(20) NOT NULL DEFAULT 'active',
 				created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

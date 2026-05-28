@@ -13,6 +13,13 @@ if (! defined('ABSPATH')) {
 
 final class QuickSlot {
 	/**
+	 * Admin bootstrap instance.
+	 *
+	 * @var QS_Admin|null
+	 */
+	private ?QS_Admin $admin = null;
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var QuickSlot|null
@@ -42,6 +49,20 @@ final class QuickSlot {
 	public function init(): void {
 		add_action('plugins_loaded', array($this, 'load_textdomain'));
 		add_action('plugins_loaded', array($this, 'maybe_upgrade_database'));
+
+		if (is_admin()) {
+			$this->init_admin();
+		}
+	}
+
+	/**
+	 * Loads admin functionality.
+	 */
+	private function init_admin(): void {
+		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-admin.php';
+
+		$this->admin = new QS_Admin();
+		$this->admin->init();
 	}
 
 	/**

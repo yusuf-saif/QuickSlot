@@ -22,6 +22,15 @@ final class QS_Sanitizer {
 	}
 
 	/**
+	 * Sanitizes textarea values.
+	 *
+	 * @param string $value Raw value.
+	 */
+	public static function textarea(string $value): string {
+		return sanitize_textarea_field($value);
+	}
+
+	/**
 	 * Prevent instantiation.
 	 */
 	private function __construct() {
