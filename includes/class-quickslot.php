@@ -27,6 +27,13 @@ final class QuickSlot {
 	private ?QS_Frontend $frontend = null;
 
 	/**
+	 * REST bootstrap instance.
+	 *
+	 * @var QS_REST_Controller|null
+	 */
+	private ?QS_REST_Controller $rest = null;
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var QuickSlot|null
@@ -56,6 +63,7 @@ final class QuickSlot {
 	public function init(): void {
 		add_action('plugins_loaded', array($this, 'load_textdomain'));
 		add_action('plugins_loaded', array($this, 'maybe_upgrade_database'));
+		$this->init_rest();
 
 		if (is_admin()) {
 			$this->init_admin();
@@ -83,6 +91,19 @@ final class QuickSlot {
 
 		$this->frontend = new QS_Frontend();
 		$this->frontend->init();
+	}
+
+	/**
+	 * Loads REST API functionality.
+	 */
+	private function init_rest(): void {
+		require_once QUICKSLOT_PATH . 'includes/core/class-qs-slot-generator.php';
+		require_once QUICKSLOT_PATH . 'includes/api/class-qs-services-endpoint.php';
+		require_once QUICKSLOT_PATH . 'includes/api/class-qs-availability-endpoint.php';
+		require_once QUICKSLOT_PATH . 'includes/api/class-qs-rest-controller.php';
+
+		$this->rest = new QS_REST_Controller();
+		$this->rest->init();
 	}
 
 	/**
