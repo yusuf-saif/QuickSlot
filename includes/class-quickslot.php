@@ -20,6 +20,13 @@ final class QuickSlot {
 	private ?QS_Admin $admin = null;
 
 	/**
+	 * Frontend bootstrap instance.
+	 *
+	 * @var QS_Frontend|null
+	 */
+	private ?QS_Frontend $frontend = null;
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var QuickSlot|null
@@ -52,6 +59,8 @@ final class QuickSlot {
 
 		if (is_admin()) {
 			$this->init_admin();
+		} else {
+			$this->init_frontend();
 		}
 	}
 
@@ -63,6 +72,17 @@ final class QuickSlot {
 
 		$this->admin = new QS_Admin();
 		$this->admin->init();
+	}
+
+	/**
+	 * Loads frontend functionality.
+	 */
+	private function init_frontend(): void {
+		require_once QUICKSLOT_PATH . 'includes/frontend/class-qs-booking-form.php';
+		require_once QUICKSLOT_PATH . 'includes/frontend/class-qs-frontend.php';
+
+		$this->frontend = new QS_Frontend();
+		$this->frontend->init();
 	}
 
 	/**

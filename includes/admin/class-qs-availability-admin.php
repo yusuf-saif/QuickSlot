@@ -92,8 +92,9 @@ final class QS_Availability_Admin {
 			$is_available   = isset($day_input['is_available']) ? 1 : 0;
 			$start_time     = isset($day_input['start_time']) ? QS_Sanitizer::text((string) $day_input['start_time']) : '';
 			$end_time       = isset($day_input['end_time']) ? QS_Sanitizer::text((string) $day_input['end_time']) : '';
-			$buffer_minutes = isset($day_input['buffer_minutes']) ? absint((string) $day_input['buffer_minutes']) : 0;
-			$max_bookings   = isset($day_input['max_bookings']) && '' !== (string) $day_input['max_bookings'] ? absint((string) $day_input['max_bookings']) : 0;
+			$buffer_minutes    = isset($day_input['buffer_minutes']) ? absint((string) $day_input['buffer_minutes']) : 0;
+			$max_bookings_raw  = isset($day_input['max_bookings']) ? QS_Sanitizer::text((string) $day_input['max_bookings']) : '';
+			$max_bookings      = $this->normalize_max_bookings($max_bookings_raw);
 			$breaks         = isset($day_input['breaks']) && is_array($day_input['breaks']) ? $day_input['breaks'] : array();
 
 			$validated_breaks = array();
@@ -108,6 +109,14 @@ final class QS_Availability_Admin {
 				$errors[] = sprintf(
 					/* translators: %s: day label. */
 					esc_html__('%s end time must be after the start time.', 'quickslot'),
+					esc_html($label)
+				);
+			}
+
+			if (! $this->is_valid_max_bookings($max_bookings_raw)) {
+				$errors[] = sprintf(
+					/* translators: %s: day label. */
+					esc_html__('%s max bookings must be blank or a positive whole number.', 'quickslot'),
 					esc_html($label)
 				);
 			}
@@ -194,7 +203,9 @@ final class QS_Availability_Admin {
 			$has_hours = '' !== (string) $day_data['start_time'] && '' !== (string) $day_data['end_time'];
 
 			if (null !== $existing_id) {
-				if ($has_hours) {
+				$has_max_bookings = null !== $day_data['max_bookings'];
+
+				if ($has_hours && $has_max_bookings) {
 					$sql = $wpdb->prepare(
 						"UPDATE {$table} SET is_available = %d, start_time = %s, end_time = %s, breaks = %s, buffer_minutes = %d, max_bookings = %d, updated_at = %s WHERE id = %d",
 						(int) $day_data['is_available'],
@@ -206,7 +217,18 @@ final class QS_Availability_Admin {
 						$now,
 						(int) $existing_id
 					);
-				} else {
+				} elseif ($has_hours) {
+					$sql = $wpdb->prepare(
+						"UPDATE {$table} SET is_available = %d, start_time = %s, end_time = %s, breaks = %s, buffer_minutes = %d, max_bookings = NULL, updated_at = %s WHERE id = %d",
+						(int) $day_data['is_available'],
+						(string) $day_data['start_time'],
+						(string) $day_data['end_time'],
+						$breaks_json,
+						(int) $day_data['buffer_minutes'],
+						$now,
+						(int) $existing_id
+					);
+				} elseif ($has_max_bookings) {
 					$sql = $wpdb->prepare(
 						"UPDATE {$table} SET is_available = %d, start_time = NULL, end_time = NULL, breaks = %s, buffer_minutes = %d, max_bookings = %d, updated_at = %s WHERE id = %d",
 						(int) $day_data['is_available'],
@@ -216,9 +238,20 @@ final class QS_Availability_Admin {
 						$now,
 						(int) $existing_id
 					);
+				} else {
+					$sql = $wpdb->prepare(
+						"UPDATE {$table} SET is_available = %d, start_time = NULL, end_time = NULL, breaks = %s, buffer_minutes = %d, max_bookings = NULL, updated_at = %s WHERE id = %d",
+						(int) $day_data['is_available'],
+						$breaks_json,
+						(int) $day_data['buffer_minutes'],
+						$now,
+						(int) $existing_id
+					);
 				}
 			} else {
-				if ($has_hours) {
+				$has_max_bookings = null !== $day_data['max_bookings'];
+
+				if ($has_hours && $has_max_bookings) {
 					$sql = $wpdb->prepare(
 						"INSERT INTO {$table} (day_of_week, is_available, start_time, end_time, breaks, buffer_minutes, max_bookings, updated_at) VALUES (%d, %d, %s, %s, %s, %d, %d, %s)",
 						(int) $day_data['day_of_week'],
@@ -230,7 +263,18 @@ final class QS_Availability_Admin {
 						(int) $day_data['max_bookings'],
 						$now
 					);
-				} else {
+				} elseif ($has_hours) {
+					$sql = $wpdb->prepare(
+						"INSERT INTO {$table} (day_of_week, is_available, start_time, end_time, breaks, buffer_minutes, max_bookings, updated_at) VALUES (%d, %d, %s, %s, %s, %d, NULL, %s)",
+						(int) $day_data['day_of_week'],
+						(int) $day_data['is_available'],
+						(string) $day_data['start_time'],
+						(string) $day_data['end_time'],
+						$breaks_json,
+						(int) $day_data['buffer_minutes'],
+						$now
+					);
+				} elseif ($has_max_bookings) {
 					$sql = $wpdb->prepare(
 						"INSERT INTO {$table} (day_of_week, is_available, start_time, end_time, breaks, buffer_minutes, max_bookings, updated_at) VALUES (%d, %d, NULL, NULL, %s, %d, %d, %s)",
 						(int) $day_data['day_of_week'],
@@ -238,6 +282,15 @@ final class QS_Availability_Admin {
 						$breaks_json,
 						(int) $day_data['buffer_minutes'],
 						(int) $day_data['max_bookings'],
+						$now
+					);
+				} else {
+					$sql = $wpdb->prepare(
+						"INSERT INTO {$table} (day_of_week, is_available, start_time, end_time, breaks, buffer_minutes, max_bookings, updated_at) VALUES (%d, %d, NULL, NULL, %s, %d, NULL, %s)",
+						(int) $day_data['day_of_week'],
+						(int) $day_data['is_available'],
+						$breaks_json,
+						(int) $day_data['buffer_minutes'],
 						$now
 					);
 				}
@@ -555,7 +608,7 @@ final class QS_Availability_Admin {
 				'end_time'       => '',
 				'breaks'         => array(),
 				'buffer_minutes' => 0,
-				'max_bookings'   => 0,
+				'max_bookings'   => '',
 			);
 		}
 
@@ -580,7 +633,7 @@ final class QS_Availability_Admin {
 				'end_time'       => $this->format_time_for_input($row->end_time),
 				'breaks'         => is_array($breaks) ? $this->normalize_breaks_for_display($breaks) : array(),
 				'buffer_minutes' => (int) $row->buffer_minutes,
-				'max_bookings'   => (int) $row->max_bookings,
+				'max_bookings'   => null === $row->max_bookings ? '' : (int) $row->max_bookings,
 			);
 		}
 
@@ -699,6 +752,36 @@ final class QS_Availability_Admin {
 		}
 
 		return $normalized;
+	}
+
+	/**
+	 * Normalizes the max bookings field.
+	 */
+	private function normalize_max_bookings(string $value): ?int {
+		$value = trim($value);
+
+		if ('' === $value) {
+			return null;
+		}
+
+		return (int) $value;
+	}
+
+	/**
+	 * Validates the max bookings field.
+	 */
+	private function is_valid_max_bookings(string $value): bool {
+		$value = trim($value);
+
+		if ('' === $value) {
+			return true;
+		}
+
+		if (! preg_match('/^[1-9]\d*$/', $value)) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

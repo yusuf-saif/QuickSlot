@@ -72,7 +72,7 @@ final class QS_Installer {
 				end_time time NULL,
 				breaks longtext NULL,
 				buffer_minutes int(11) unsigned NOT NULL DEFAULT 0,
-				max_bookings int(11) unsigned NOT NULL DEFAULT 1,
+				max_bookings int(11) unsigned NULL DEFAULT NULL,
 				updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				PRIMARY KEY  (id),
 				KEY day_of_week (day_of_week)
