@@ -148,6 +148,12 @@
 	max-width: 640px;
 }
 
+.qs-calendar-status-card__action-form {
+	display: inline-block;
+	margin-right: 8px;
+	margin-bottom: 8px;
+}
+
 .qs-design-preview .qs-button,
 .qs-design-preview .qs-slot-button {
 	display: inline-flex;

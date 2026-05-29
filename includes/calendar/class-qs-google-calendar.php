@@ -91,6 +91,35 @@ final class QS_Google_Calendar {
 	}
 
 	/**
+	 * Returns connection details for admin display.
+	 *
+	 * @return array<string, string>
+	 */
+	public function get_connection_details(): array {
+		$connection  = $this->get_connection();
+		$settings    = $this->get_settings();
+		$calendar_id = is_array($connection) && ! empty($connection['calendar_id'])
+			? (string) $connection['calendar_id']
+			: $settings['calendar_id'];
+
+		$connected_on = '';
+
+		if (is_array($connection) && ! empty($connection['connected_at'])) {
+			try {
+				$connected_on = (new DateTimeImmutable((string) $connection['connected_at'], wp_timezone()))->format('Y-m-d H:i');
+			} catch (Exception $exception) {
+				$connected_on = '';
+			}
+		}
+
+		return array(
+			'account_email' => '',
+			'calendar_name' => $calendar_id,
+			'connected_on'  => $connected_on,
+		);
+	}
+
+	/**
 	 * Builds an OAuth authorization URL.
 	 *
 	 * @return string|WP_Error

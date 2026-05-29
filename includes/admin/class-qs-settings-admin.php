@@ -191,6 +191,7 @@ final class QS_Settings_Admin {
 		$settings = $this->google_calendar->get_settings();
 		$is_connected = $this->google_calendar->is_connected();
 		$is_library_available = $this->google_calendar->is_library_available();
+		$connection_details = $this->google_calendar->get_connection_details();
 		?>
 		<details class="notice notice-info inline">
 			<summary><strong><?php echo esc_html__('View Setup Guide', 'quickslot'); ?></strong></summary>
@@ -231,6 +232,61 @@ final class QS_Settings_Admin {
 			</div>
 		</details>
 
+		<div class="qs-admin-form-card qs-settings-card qs-calendar-status-card">
+			<h2><?php echo esc_html__('Google Calendar Status', 'quickslot'); ?></h2>
+
+			<?php if ($is_connected) : ?>
+				<p>
+					<span class="qs-badge qs-badge--confirmed"><?php echo esc_html__('Connected', 'quickslot'); ?></span>
+				</p>
+				<table class="form-table" role="presentation">
+					<tbody>
+						<tr>
+							<th scope="row"><?php echo esc_html__('Connected Account', 'quickslot'); ?></th>
+							<td><?php echo esc_html('' !== $connection_details['account_email'] ? $connection_details['account_email'] : __('Not available', 'quickslot')); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php echo esc_html__('Calendar', 'quickslot'); ?></th>
+							<td><?php echo esc_html('' !== $connection_details['calendar_name'] ? $connection_details['calendar_name'] : __('Not available', 'quickslot')); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php echo esc_html__('Connected On', 'quickslot'); ?></th>
+							<td><?php echo esc_html('' !== $connection_details['connected_on'] ? $connection_details['connected_on'] : __('Not available', 'quickslot')); ?></td>
+						</tr>
+					</tbody>
+				</table>
+				<p><?php echo esc_html__('Bookings confirmed through QuickSlot will automatically sync to Google Calendar.', 'quickslot'); ?></p>
+				<div class="qs-calendar-status-card__actions">
+					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="qs-calendar-status-card__action-form">
+						<?php wp_nonce_field('qs_google_oauth_start'); ?>
+						<input type="hidden" name="action" value="quickslot_google_oauth_start">
+						<button type="submit" class="button button-primary"<?php disabled(! $is_library_available || '' === $settings['client_id'] || '' === $settings['client_secret']); ?>><?php echo esc_html__('Reconnect Google Calendar', 'quickslot'); ?></button>
+					</form>
+					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="qs-calendar-status-card__action-form">
+						<?php wp_nonce_field('qs_google_disconnect'); ?>
+						<input type="hidden" name="action" value="quickslot_google_disconnect">
+						<button type="submit" class="button"><?php echo esc_html__('Disconnect', 'quickslot'); ?></button>
+					</form>
+				</div>
+			<?php else : ?>
+				<p>
+					<span class="qs-badge qs-badge--cancelled"><?php echo esc_html__('Not Connected', 'quickslot'); ?></span>
+				</p>
+				<p><?php echo esc_html__('Your bookings are not currently being synced to Google Calendar.', 'quickslot'); ?></p>
+				<p><?php echo esc_html__('To enable automatic calendar sync:', 'quickslot'); ?></p>
+				<ol>
+					<li><?php echo esc_html__('Save your Google credentials.', 'quickslot'); ?></li>
+					<li><?php echo esc_html__('Connect your Google account.', 'quickslot'); ?></li>
+					<li><?php echo esc_html__('Select a calendar.', 'quickslot'); ?></li>
+				</ol>
+				<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+					<?php wp_nonce_field('qs_google_oauth_start'); ?>
+					<input type="hidden" name="action" value="quickslot_google_oauth_start">
+					<p><button type="submit" class="button button-primary"<?php disabled(! $is_library_available || '' === $settings['client_id'] || '' === $settings['client_secret']); ?>><?php echo esc_html__('Connect Google Calendar', 'quickslot'); ?></button></p>
+				</form>
+			<?php endif; ?>
+		</div>
+
 		<form method="post" action="<?php echo esc_url($this->get_settings_url(array('tab' => 'calendar'))); ?>" class="qs-admin-form-card qs-settings-card">
 			<?php wp_nonce_field('qs_save_calendar_settings'); ?>
 
@@ -252,10 +308,6 @@ final class QS_Settings_Admin {
 						<th scope="row"><label for="qs-google-calendar-id"><?php echo esc_html__('Google Calendar ID', 'quickslot'); ?></label></th>
 						<td><input type="text" id="qs-google-calendar-id" name="qs_google_calendar_id" class="regular-text" value="<?php echo esc_attr($settings['calendar_id']); ?>"><p class="description"><?php echo esc_html__('Use primary to sync with the primary Google Calendar.', 'quickslot'); ?></p></td>
 					</tr>
-					<tr>
-						<th scope="row"><?php echo esc_html__('Connection Status', 'quickslot'); ?></th>
-						<td><span class="qs-badge <?php echo $is_connected ? 'qs-badge--confirmed' : 'qs-badge--cancelled'; ?>"><?php echo esc_html($this->google_calendar->get_status_label()); ?></span></td>
-					</tr>
 				</tbody>
 			</table>
 
@@ -264,22 +316,6 @@ final class QS_Settings_Admin {
 			</p>
 		</form>
 
-		<div class="qs-admin-form-card qs-settings-card">
-			<h2><?php echo esc_html__('Google Calendar Connection', 'quickslot'); ?></h2>
-			<?php if ($is_connected) : ?>
-				<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-					<?php wp_nonce_field('qs_google_disconnect'); ?>
-					<input type="hidden" name="action" value="quickslot_google_disconnect">
-					<p><button type="submit" class="button"><?php echo esc_html__('Disconnect', 'quickslot'); ?></button></p>
-				</form>
-			<?php else : ?>
-				<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-					<?php wp_nonce_field('qs_google_oauth_start'); ?>
-					<input type="hidden" name="action" value="quickslot_google_oauth_start">
-					<p><button type="submit" class="button button-primary"<?php disabled(! $is_library_available || '' === $settings['client_id'] || '' === $settings['client_secret']); ?>><?php echo esc_html__('Connect Google Calendar', 'quickslot'); ?></button></p>
-				</form>
-			<?php endif; ?>
-		</div>
 		<?php
 	}
 
