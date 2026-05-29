@@ -52,29 +52,9 @@ final class QS_Bookings_Endpoint {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array($this, 'create_booking'),
-				'permission_callback' => array($this, 'permissions_check'),
+				'permission_callback' => '__return_true',
 			)
 		);
-	}
-
-	/**
-	 * Verifies the REST nonce.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return true|WP_Error
-	 */
-	public function permissions_check(WP_REST_Request $request) {
-		$nonce = (string) $request->get_header('x_wp_nonce');
-
-		if (! wp_verify_nonce($nonce, 'wp_rest')) {
-			return new WP_Error(
-				'rest_forbidden',
-				__('Sorry, you are not allowed to do that.', 'quickslot'),
-				array('status' => rest_authorization_required_code())
-			);
-		}
-
-		return true;
 	}
 
 	/**
@@ -111,6 +91,17 @@ final class QS_Bookings_Endpoint {
 					),
 				),
 				200
+			);
+		}
+
+		if ($this->is_rate_limited($request)) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'rate_limited',
+					'message' => __('Too many booking attempts. Please try again later.', 'quickslot'),
+				),
+				429
 			);
 		}
 
@@ -243,5 +234,55 @@ final class QS_Bookings_Endpoint {
 		$row   = $wpdb->get_var($query);
 
 		return null !== $row;
+	}
+
+	/**
+	 * Limits repeated anonymous booking attempts for cached/public pages.
+	 */
+	private function is_rate_limited(WP_REST_Request $request): bool {
+		$ip_address = $this->get_client_ip($request);
+		$cache_key  = 'qs_booking_rate_' . hash('sha256', $ip_address . wp_salt('auth'));
+		$attempts   = get_transient($cache_key);
+
+		if (! is_int($attempts)) {
+			$attempts = 0;
+		}
+
+		if ($attempts >= 10) {
+			return true;
+		}
+
+		set_transient($cache_key, $attempts + 1, 15 * MINUTE_IN_SECONDS);
+
+		return false;
+	}
+
+	/**
+	 * Returns the best available client IP for coarse rate limiting.
+	 */
+	private function get_client_ip(WP_REST_Request $request): string {
+		$forwarded_ip = $request->get_header('cf-connecting-ip');
+
+		if ('' === $forwarded_ip) {
+			$forwarded_ip = $request->get_header('x-forwarded-for');
+		}
+
+		if ('' !== $forwarded_ip) {
+			$parts = array_map('trim', explode(',', $forwarded_ip));
+			$ip    = $parts[0] ?? '';
+
+			if ('' !== $ip) {
+				return sanitize_text_field($ip);
+			}
+		}
+
+		$remote_addr = $request->get_header('x-real-ip');
+
+		if ('' === $remote_addr) {
+			$server_params = $request->get_server_params();
+			$remote_addr   = isset($server_params['REMOTE_ADDR']) ? (string) $server_params['REMOTE_ADDR'] : '';
+		}
+
+		return '' !== $remote_addr ? sanitize_text_field($remote_addr) : 'unknown';
 	}
 }

@@ -473,10 +473,6 @@ final class QS_Bookings_Admin {
 
 		$booking_id = (int) $result;
 
-		if ('confirmed' === (string) $form_data['status']) {
-			do_action('quickslot_booking_confirmed', $booking_id);
-		}
-
 		wp_safe_redirect($this->get_view_url($booking_id, array('qs_notice' => 'created')));
 		exit;
 	}

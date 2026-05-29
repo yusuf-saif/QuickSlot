@@ -16,7 +16,7 @@ final class QS_Activator {
 	 * Runs plugin activation tasks.
 	 */
 	public static function activate(): void {
-		QS_Installer::install();
+		QS_Migration_Manager::run();
 		flush_rewrite_rules();
 	}
 }

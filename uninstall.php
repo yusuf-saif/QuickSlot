@@ -39,3 +39,4 @@ foreach ($tables as $table) {
 }
 
 delete_option('quickslot_db_version');
+delete_option('quickslot_version');

@@ -158,10 +158,16 @@ final class QuickSlot {
 	 * Runs schema updates when the database version changes.
 	 */
 	public function maybe_upgrade_database(): void {
-		$installed_version = get_option('quickslot_db_version', '');
+		$installed_db_version = get_option('quickslot_db_version', '');
+		$installed_version    = get_option('quickslot_version', '');
 
-		if (! is_string($installed_version) || version_compare($installed_version, QUICKSLOT_DB_VERSION, '<')) {
-			QS_Installer::install();
+		if (
+			! is_string($installed_db_version)
+			|| ! is_string($installed_version)
+			|| version_compare($installed_db_version, QUICKSLOT_DB_VERSION, '<')
+			|| version_compare($installed_version, QUICKSLOT_VERSION, '<')
+		) {
+			QS_Migration_Manager::run();
 		}
 	}
 }

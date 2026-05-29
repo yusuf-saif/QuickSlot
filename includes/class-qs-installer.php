@@ -30,8 +30,6 @@ final class QS_Installer {
 		foreach ($tables_sql as $sql) {
 			dbDelta($sql);
 		}
-
-		update_option('quickslot_db_version', QUICKSLOT_DB_VERSION);
 	}
 
 	/**

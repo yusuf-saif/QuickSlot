@@ -435,6 +435,9 @@ final class QS_Google_Calendar {
 			return false;
 		}
 
+		$table      = $wpdb->prefix . 'qs_calendar_connections';
+		$connection = $this->get_connection();
+
 		if (is_array($connection) && '' === $refresh_token) {
 			$existing_refresh = $this->decrypt_token((string) ($connection['refresh_token'] ?? ''));
 			$refresh_token    = is_string($existing_refresh) ? $existing_refresh : '';
@@ -447,8 +450,6 @@ final class QS_Google_Calendar {
 			return false;
 		}
 
-		$table       = $wpdb->prefix . 'qs_calendar_connections';
-		$connection  = $this->get_connection();
 		$expires_at  = gmdate('Y-m-d H:i:s', time() + max(1, $expires_in));
 		$data        = array(
 			'provider'         => 'google',
