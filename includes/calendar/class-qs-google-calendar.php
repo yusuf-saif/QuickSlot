@@ -44,6 +44,7 @@ final class QS_Google_Calendar {
 		add_action('admin_post_quickslot_google_oauth_start', array($this, 'handle_oauth_start'));
 		add_action('admin_post_quickslot_google_oauth_callback', array($this, 'handle_oauth_callback'));
 		add_action('admin_post_quickslot_google_disconnect', array($this, 'handle_disconnect'));
+		add_action('admin_post_quickslot_google_test_connection', array($this, 'handle_test_connection'));
 		add_action('quickslot_booking_confirmed', array($this, 'handle_booking_confirmed'));
 		add_action('quickslot_booking_cancelled', array($this, 'handle_booking_cancelled'), 20, 2);
 	}
@@ -296,6 +297,31 @@ final class QS_Google_Calendar {
 		$this->clear_connection();
 
 		wp_safe_redirect($this->get_settings_url(array('tab' => 'calendar', 'qs_notice' => 'google_disconnected')));
+		exit;
+	}
+
+	/**
+	 * Handles connection test requests.
+	 */
+	public function handle_test_connection(): void {
+		$this->assert_manage_options();
+		check_admin_referer('qs_test_google_connection');
+
+		if (! $this->is_connected()) {
+			wp_safe_redirect($this->get_settings_url(array('tab' => 'calendar', 'qs_notice' => 'google_test_failure')));
+			exit;
+		}
+
+		$result = $this->test_connection();
+
+		wp_safe_redirect(
+			$this->get_settings_url(
+				array(
+					'tab'       => 'calendar',
+					'qs_notice' => $result ? 'google_test_success' : 'google_test_failure',
+				)
+			)
+		);
 		exit;
 	}
 
@@ -619,6 +645,29 @@ final class QS_Google_Calendar {
 	}
 
 	/**
+	 * Tests whether the configured connection can access the calendar.
+	 */
+	private function test_connection(): bool {
+		$client = $this->get_authenticated_client();
+
+		if ($client instanceof WP_Error) {
+			$this->log_safe_error('Google Calendar test connection failed.');
+			return false;
+		}
+
+		try {
+			$service     = new Google\Service\Calendar($client);
+			$calendar_id = $this->get_settings()['calendar_id'];
+			$service->calendars->get($calendar_id);
+		} catch (Throwable $throwable) {
+			$this->log_safe_error('Google Calendar test connection failed.');
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Loads Composer autoload if available.
 	 */
 	private function maybe_load_vendor(): void {
@@ -674,5 +723,12 @@ final class QS_Google_Calendar {
 	 */
 	private function log_error(string $context, string $message): void {
 		error_log('[QuickSlot] Google Calendar ' . $context . ' failed: ' . $message);
+	}
+
+	/**
+	 * Logs a safe generic Google Calendar error.
+	 */
+	private function log_safe_error(string $message): void {
+		error_log('[QuickSlot] ' . $message);
 	}
 }

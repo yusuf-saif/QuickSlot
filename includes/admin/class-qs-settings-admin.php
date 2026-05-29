@@ -259,6 +259,11 @@ final class QS_Settings_Admin {
 				<p><?php echo esc_html__('Bookings confirmed through QuickSlot will automatically sync to Google Calendar.', 'quickslot'); ?></p>
 				<div class="qs-calendar-status-card__actions">
 					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="qs-calendar-status-card__action-form">
+						<?php wp_nonce_field('qs_test_google_connection'); ?>
+						<input type="hidden" name="action" value="quickslot_google_test_connection">
+						<button type="submit" class="button button-secondary"><?php echo esc_html__('Test Google Calendar Connection', 'quickslot'); ?></button>
+					</form>
+					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="qs-calendar-status-card__action-form">
 						<?php wp_nonce_field('qs_google_oauth_start'); ?>
 						<input type="hidden" name="action" value="quickslot_google_oauth_start">
 						<button type="submit" class="button button-primary"<?php disabled(! $is_library_available || '' === $settings['client_id'] || '' === $settings['client_secret']); ?>><?php echo esc_html__('Reconnect Google Calendar', 'quickslot'); ?></button>
@@ -269,6 +274,7 @@ final class QS_Settings_Admin {
 						<button type="submit" class="button"><?php echo esc_html__('Disconnect', 'quickslot'); ?></button>
 					</form>
 				</div>
+				<?php $this->render_calendar_test_result(); ?>
 			<?php else : ?>
 				<p>
 					<span class="qs-badge qs-badge--cancelled"><?php echo esc_html__('Not Connected', 'quickslot'); ?></span>
@@ -292,22 +298,33 @@ final class QS_Settings_Admin {
 			<?php wp_nonce_field('qs_save_calendar_settings'); ?>
 
 			<?php if (! $is_library_available) : ?>
-				<div class="notice notice-warning inline"><p><?php echo esc_html__('Google API client library not installed. Run composer install to enable Google Calendar integration.', 'quickslot'); ?></p></div>
+				<div class="notice notice-warning inline">
+					<p><?php echo esc_html__('Google Calendar integration is currently unavailable. Please contact your website administrator to enable Google Calendar support.', 'quickslot'); ?></p>
+					<?php if (defined('WP_DEBUG') && WP_DEBUG) : ?>
+						<p><?php echo esc_html__('Developer note: google/apiclient is missing. Run composer install in the plugin directory.', 'quickslot'); ?></p>
+					<?php endif; ?>
+				</div>
 			<?php endif; ?>
 
 			<table class="form-table" role="presentation">
 				<tbody>
 					<tr>
 						<th scope="row"><label for="qs-google-client-id"><?php echo esc_html__('Google Client ID', 'quickslot'); ?></label></th>
-						<td><input type="text" id="qs-google-client-id" name="qs_google_client_id" class="regular-text" value="<?php echo esc_attr($settings['client_id']); ?>"></td>
+						<td>
+							<input type="text" id="qs-google-client-id" name="qs_google_client_id" class="regular-text" value="<?php echo esc_attr($settings['client_id']); ?>">
+							<p class="description"><?php echo esc_html__('Paste the Client ID from your Google Cloud OAuth credentials.', 'quickslot'); ?></p>
+						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="qs-google-client-secret"><?php echo esc_html__('Google Client Secret', 'quickslot'); ?></label></th>
-						<td><input type="text" id="qs-google-client-secret" name="qs_google_client_secret" class="regular-text" value="<?php echo esc_attr($settings['client_secret']); ?>"></td>
+						<td>
+							<input type="text" id="qs-google-client-secret" name="qs_google_client_secret" class="regular-text" value="<?php echo esc_attr($settings['client_secret']); ?>">
+							<p class="description"><?php echo esc_html__('Paste the Client Secret from your Google Cloud OAuth credentials. This is stored securely and never shown publicly.', 'quickslot'); ?></p>
+						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="qs-google-calendar-id"><?php echo esc_html__('Google Calendar ID', 'quickslot'); ?></label></th>
-						<td><input type="text" id="qs-google-calendar-id" name="qs_google_calendar_id" class="regular-text" value="<?php echo esc_attr($settings['calendar_id']); ?>"><p class="description"><?php echo esc_html__('Use primary to sync with the primary Google Calendar.', 'quickslot'); ?></p></td>
+						<th scope="row"><label for="qs-google-calendar-id"><?php echo esc_html__('Calendar to Sync', 'quickslot'); ?></label></th>
+						<td><input type="text" id="qs-google-calendar-id" name="qs_google_calendar_id" class="regular-text" value="<?php echo esc_attr($settings['calendar_id']); ?>"><p class="description"><?php echo esc_html__('Use primary to sync with your main Google Calendar. Advanced users may enter a specific calendar ID.', 'quickslot'); ?></p></td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="qs-google-redirect-uri"><?php echo esc_html__('Redirect URI', 'quickslot'); ?></label></th>
@@ -632,5 +649,24 @@ final class QS_Settings_Admin {
 	 */
 	private function get_settings_url(array $args = array()): string {
 		return add_query_arg(array_merge(array('page' => 'quickslot-settings'), $args), admin_url('admin.php'));
+	}
+
+	/**
+	 * Renders inline calendar connection test results.
+	 */
+	private function render_calendar_test_result(): void {
+		$notice_key = isset($_GET['qs_notice']) ? QS_Sanitizer::text(wp_unslash($_GET['qs_notice'])) : '';
+
+		if ('google_test_success' !== $notice_key && 'google_test_failure' !== $notice_key) {
+			return;
+		}
+
+		$is_success = 'google_test_success' === $notice_key;
+		$message    = $is_success
+			? __('Connection successful. QuickSlot can access this Google Calendar.', 'quickslot')
+			: __('Connection failed. Please reconnect Google Calendar and try again.', 'quickslot');
+		?>
+		<div class="notice notice-<?php echo esc_attr($is_success ? 'success' : 'error'); ?> inline"><p><?php echo esc_html($message); ?></p></div>
+		<?php
 	}
 }
