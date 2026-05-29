@@ -15,11 +15,11 @@ final class QS_Installer {
 	/**
 	 * Creates or updates plugin database tables.
 	 */
-	public static function install(): void {
+	public static function install(): bool {
 		global $wpdb;
 
 		if (! isset($wpdb) || ! ($wpdb instanceof wpdb)) {
-			return;
+			return false;
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -30,6 +30,35 @@ final class QS_Installer {
 		foreach ($tables_sql as $sql) {
 			dbDelta($sql);
 		}
+
+		return self::required_tables_exist($wpdb->prefix);
+	}
+
+	/**
+	 * Verifies that all required plugin tables exist after installation.
+	 */
+	private static function required_tables_exist(string $prefix): bool {
+		global $wpdb;
+
+		$required_tables = array(
+			$prefix . 'qs_services',
+			$prefix . 'qs_availability',
+			$prefix . 'qs_availability_exceptions',
+			$prefix . 'qs_bookings',
+			$prefix . 'qs_calendar_connections',
+			$prefix . 'qs_email_logs',
+		);
+
+		foreach ($required_tables as $table_name) {
+			$query = $wpdb->prepare('SHOW TABLES LIKE %s', $table_name);
+			$row   = $wpdb->get_var($query);
+
+			if ($table_name !== $row) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**

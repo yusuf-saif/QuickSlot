@@ -55,6 +55,7 @@ final class QS_Admin {
 		$this->settings_admin = new QS_Settings_Admin();
 
 		add_action('admin_menu', array($this, 'register_menu'));
+		add_action('admin_notices', array($this, 'render_transaction_support_notice'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
 		add_filter('plugin_action_links_' . QUICKSLOT_BASENAME, array($this, 'add_action_links'));
 	}
@@ -248,6 +249,34 @@ final class QS_Admin {
 			<h1><?php echo esc_html($title); ?></h1>
 			<p><?php echo esc_html__('This section will be available in the next build phase.', 'quickslot'); ?></p>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Warns admins when the bookings table engine does not support transactions.
+	 */
+	public function render_transaction_support_notice(): void {
+		global $wpdb;
+
+		if (! is_admin() || ! current_user_can('manage_options') || ! isset($wpdb) || ! ($wpdb instanceof wpdb)) {
+			return;
+		}
+
+		$table_name = $wpdb->prefix . 'qs_bookings';
+		$query      = $wpdb->prepare('SHOW TABLE STATUS LIKE %s', $table_name);
+		$row        = $wpdb->get_row($query, ARRAY_A);
+
+		if (! is_array($row) || empty($row['Engine'])) {
+			return;
+		}
+
+		$engine = strtolower((string) $row['Engine']);
+
+		if (in_array($engine, array('innodb', 'ndb', 'ndbcluster'), true)) {
+			return;
+		}
+		?>
+		<div class="notice notice-warning"><p><?php echo esc_html__('QuickSlot works best with InnoDB tables. Your bookings table does not appear to support transactions, so double-booking protection may be reduced.', 'quickslot'); ?></p></div>
 		<?php
 	}
 }

@@ -32,7 +32,9 @@ final class QS_Migration_Manager {
 			return;
 		}
 
-		QS_Installer::install();
+		if (! QS_Installer::install()) {
+			return;
+		}
 
 		$installed_db_version = get_option(self::DB_VERSION_OPTION, '');
 		$installed_db_version = is_string($installed_db_version) && '' !== $installed_db_version ? $installed_db_version : '0.0.0';

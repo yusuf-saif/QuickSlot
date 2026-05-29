@@ -94,7 +94,7 @@ final class QS_Bookings_Endpoint {
 			);
 		}
 
-		if ($this->is_rate_limited($request)) {
+		if ($this->passes_basic_rate_limit_validation($data) && $this->is_rate_limited($request)) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -234,6 +234,17 @@ final class QS_Bookings_Endpoint {
 		$row   = $wpdb->get_var($query);
 
 		return null !== $row;
+	}
+
+	/**
+	 * Limits counting to attempts that at least include the required booking fields.
+	 */
+	private function passes_basic_rate_limit_validation(array $data): bool {
+		return (int) $data['service_id'] > 0
+			&& '' !== (string) $data['booking_date']
+			&& '' !== (string) $data['booking_time']
+			&& '' !== (string) $data['customer_name']
+			&& '' !== (string) $data['customer_email'];
 	}
 
 	/**
