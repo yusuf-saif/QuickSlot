@@ -63,6 +63,7 @@ final class QuickSlot {
 	public function init(): void {
 		add_action('plugins_loaded', array($this, 'load_textdomain'));
 		add_action('plugins_loaded', array($this, 'maybe_upgrade_database'));
+		$this->init_email();
 		$this->init_rest();
 
 		if (is_admin()) {
@@ -107,6 +108,17 @@ final class QuickSlot {
 
 		$this->rest = new QS_REST_Controller();
 		$this->rest->init();
+	}
+
+	/**
+	 * Loads email functionality.
+	 */
+	private function init_email(): void {
+		require_once QUICKSLOT_PATH . 'includes/email/class-qs-email-templates.php';
+		require_once QUICKSLOT_PATH . 'includes/email/class-qs-email-logger.php';
+		require_once QUICKSLOT_PATH . 'includes/email/class-qs-mailer.php';
+
+		QS_Mailer::instance();
 	}
 
 	/**
