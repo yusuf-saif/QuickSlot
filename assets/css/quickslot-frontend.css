@@ -139,13 +139,24 @@
 }
 
 .qs-service-card {
+	display: grid;
+	gap: var(--qs-space-2);
+	width: 100%;
+	text-align: left;
 	cursor: pointer;
+	font: inherit;
 	transition: border-color var(--qs-transition-base), box-shadow var(--qs-transition-base), transform var(--qs-transition-base);
 }
 
 .qs-service-card.is-selected {
 	border-color: var(--qs-color-primary);
 	box-shadow: var(--qs-shadow-focus);
+}
+
+.qs-service-card__price {
+	color: var(--qs-color-text);
+	font-size: var(--qs-font-size-sm);
+	font-weight: var(--qs-font-weight-semibold);
 }
 
 .qs-service-card__title,
@@ -238,6 +249,98 @@
 	padding-top: var(--qs-space-2);
 }
 
+.qs-step-feedback,
+.qs-empty-state,
+.qs-loading-state {
+	padding: var(--qs-space-4);
+	border-radius: var(--qs-radius-lg);
+	background: var(--qs-color-bg);
+	color: var(--qs-color-muted);
+}
+
+.qs-step-feedback[hidden] {
+	display: none;
+}
+
+.qs-step-feedback.is-error {
+	background: var(--qs-color-danger-light, var(--qs-color-bg));
+	color: var(--qs-color-text);
+}
+
+.qs-calendar,
+.qs-slot-options {
+	display: grid;
+	gap: var(--qs-space-4);
+}
+
+.qs-calendar__header {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: var(--qs-space-3);
+}
+
+.qs-calendar__title {
+	margin: 0;
+	text-align: center;
+	font-size: var(--qs-font-size-lg);
+	font-weight: var(--qs-font-weight-semibold);
+}
+
+.qs-calendar__grid {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: var(--qs-space-2);
+}
+
+.qs-calendar__weekday {
+	padding: var(--qs-space-2);
+	text-align: center;
+	color: var(--qs-color-muted);
+	font-size: var(--qs-font-size-sm);
+	font-weight: var(--qs-font-weight-semibold);
+}
+
+.qs-calendar__cell--empty {
+	min-height: 2.75rem;
+}
+
+.qs-calendar__day,
+.qs-slot-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 3rem;
+	padding: var(--qs-space-3);
+	border: 1px solid var(--qs-color-border);
+	border-radius: var(--qs-radius-lg);
+	background: var(--qs-color-surface);
+	color: var(--qs-color-text);
+	font: inherit;
+	font-weight: var(--qs-font-weight-medium);
+	cursor: pointer;
+	transition: border-color var(--qs-transition-fast), background-color var(--qs-transition-fast), box-shadow var(--qs-transition-fast);
+}
+
+.qs-calendar__day.is-selected,
+.qs-slot-button.is-selected {
+	border-color: var(--qs-color-primary);
+	background: var(--qs-color-primary-light);
+	box-shadow: var(--qs-shadow-focus);
+}
+
+.qs-calendar__day.is-disabled,
+.qs-calendar__day:disabled,
+.qs-button:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
+.qs-slot-options {
+	grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
 .qs-booking-form button:focus-visible,
 .qs-booking-form input:focus-visible,
 .qs-service-card:focus-visible {
@@ -271,5 +374,9 @@
 
 	.qs-booking-step__actions {
 		justify-content: flex-end;
+	}
+
+	.qs-calendar__grid {
+		gap: var(--qs-space-3);
 	}
 }

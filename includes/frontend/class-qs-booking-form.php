@@ -45,18 +45,22 @@ final class QS_Booking_Form {
 								<p class="qs-booking-step__text"><?php echo esc_html($step['description']); ?></p>
 
 								<?php if ('service' === $step['slug']) : ?>
-									<div class="qs-service-options">
-										<article class="qs-service-card is-selected" tabindex="0">
-											<h4 class="qs-service-card__title"><?php echo esc_html__('Sample Service', 'quickslot'); ?></h4>
-											<p class="qs-service-card__meta"><?php echo esc_html__('60 minutes', 'quickslot'); ?></p>
-											<p class="qs-service-card__text"><?php echo esc_html__('This placeholder service shows how choices will appear in the next phase.', 'quickslot'); ?></p>
-										</article>
-										<article class="qs-service-card" tabindex="0">
-											<h4 class="qs-service-card__title"><?php echo esc_html__('Another Service', 'quickslot'); ?></h4>
-											<p class="qs-service-card__meta"><?php echo esc_html__('30 minutes', 'quickslot'); ?></p>
-											<p class="qs-service-card__text"><?php echo esc_html__('Additional service options will be loaded dynamically later.', 'quickslot'); ?></p>
-										</article>
+									<div class="qs-step-feedback" data-qs-feedback="service" aria-live="polite"></div>
+									<div class="qs-service-options" data-qs-services role="group" aria-label="<?php echo esc_attr__('Available services', 'quickslot'); ?>">
 									</div>
+								<?php elseif ('date' === $step['slug']) : ?>
+									<div class="qs-step-feedback" data-qs-feedback="date" aria-live="polite"></div>
+									<div class="qs-calendar" data-qs-calendar>
+										<div class="qs-calendar__header">
+											<button type="button" class="qs-button qs-button--secondary" data-qs-calendar-nav="prev"><?php echo esc_html__('Previous', 'quickslot'); ?></button>
+											<h4 class="qs-calendar__title" data-qs-calendar-title><?php echo esc_html__('Loading...', 'quickslot'); ?></h4>
+											<button type="button" class="qs-button qs-button--secondary" data-qs-calendar-nav="next"><?php echo esc_html__('Next', 'quickslot'); ?></button>
+										</div>
+										<div class="qs-calendar__grid" data-qs-calendar-grid aria-label="<?php echo esc_attr__('Booking calendar', 'quickslot'); ?>"></div>
+									</div>
+								<?php elseif ('time' === $step['slug']) : ?>
+									<div class="qs-step-feedback" data-qs-feedback="time" aria-live="polite"></div>
+									<div class="qs-slot-options" data-qs-slots role="group" aria-label="<?php echo esc_attr__('Available times', 'quickslot'); ?>"></div>
 								<?php elseif ('details' === $step['slug']) : ?>
 									<div class="qs-form-grid">
 										<div class="qs-form-field">
