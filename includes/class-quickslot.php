@@ -64,6 +64,7 @@ final class QuickSlot {
 		add_action('plugins_loaded', array($this, 'load_textdomain'));
 		add_action('plugins_loaded', array($this, 'maybe_upgrade_database'));
 		$this->init_email();
+		$this->init_calendar();
 		$this->init_rest();
 
 		if (is_admin()) {
@@ -118,11 +119,20 @@ final class QuickSlot {
 		require_once QUICKSLOT_PATH . 'includes/email/class-qs-email-logger.php';
 		require_once QUICKSLOT_PATH . 'includes/email/class-qs-mailer.php';
 		require_once QUICKSLOT_PATH . 'includes/email/class-qs-reminder-scheduler.php';
-		require_once QUICKSLOT_PATH . 'includes/calendar/class-qs-ics-generator.php';
 
 		QS_Mailer::instance();
 		QS_Reminder_Scheduler::instance();
+	}
+
+	/**
+	 * Loads calendar functionality.
+	 */
+	private function init_calendar(): void {
+		require_once QUICKSLOT_PATH . 'includes/calendar/class-qs-ics-generator.php';
+		require_once QUICKSLOT_PATH . 'includes/calendar/class-qs-google-calendar.php';
+
 		QS_ICS_Generator::instance();
+		QS_Google_Calendar::instance();
 	}
 
 	/**

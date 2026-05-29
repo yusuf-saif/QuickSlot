@@ -4,6 +4,7 @@
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
     "require": {
+        "google/apiclient": "^2.15",
         "php": ">=8.0"
     },
     "config": {

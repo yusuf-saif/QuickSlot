@@ -27,11 +27,19 @@ final class QS_Settings_Admin {
 	private QS_Reminder_Scheduler $reminders;
 
 	/**
+	 * Google Calendar integration.
+	 *
+	 * @var QS_Google_Calendar
+	 */
+	private QS_Google_Calendar $google_calendar;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->templates = new QS_Email_Templates();
 		$this->reminders = QS_Reminder_Scheduler::instance();
+		$this->google_calendar = QS_Google_Calendar::instance();
 	}
 
 	/**
@@ -60,6 +68,8 @@ final class QS_Settings_Admin {
 				<?php $this->render_general_tab(); ?>
 			<?php elseif ('email' === $active_tab) : ?>
 				<?php $this->render_email_tab(); ?>
+			<?php elseif ('calendar' === $active_tab) : ?>
+				<?php $this->render_calendar_tab(); ?>
 			<?php else : ?>
 				<?php $this->render_reminders_tab(); ?>
 			<?php endif; ?>
@@ -82,6 +92,11 @@ final class QS_Settings_Admin {
 
 		if (isset($_POST['qs_save_email_templates'])) {
 			$this->handle_email_templates_save();
+			return;
+		}
+
+		if (isset($_POST['qs_save_calendar_settings'])) {
+			$this->handle_calendar_save();
 			return;
 		}
 
@@ -151,6 +166,66 @@ final class QS_Settings_Admin {
 
 			<p class="submit"><button type="submit" name="qs_save_email_templates" class="button button-primary"><?php echo esc_html__('Save Templates', 'quickslot'); ?></button></p>
 		</form>
+		<?php
+	}
+
+	/**
+	 * Renders the Google Calendar tab.
+	 */
+	private function render_calendar_tab(): void {
+		$settings = $this->google_calendar->get_settings();
+		$is_connected = $this->google_calendar->is_connected();
+		$is_library_available = $this->google_calendar->is_library_available();
+		?>
+		<form method="post" action="<?php echo esc_url($this->get_settings_url(array('tab' => 'calendar'))); ?>" class="qs-admin-form-card qs-settings-card">
+			<?php wp_nonce_field('qs_save_calendar_settings'); ?>
+
+			<?php if (! $is_library_available) : ?>
+				<div class="notice notice-warning inline"><p><?php echo esc_html__('Google API client library not installed. Run composer install to enable Google Calendar integration.', 'quickslot'); ?></p></div>
+			<?php endif; ?>
+
+			<table class="form-table" role="presentation">
+				<tbody>
+					<tr>
+						<th scope="row"><label for="qs-google-client-id"><?php echo esc_html__('Google Client ID', 'quickslot'); ?></label></th>
+						<td><input type="text" id="qs-google-client-id" name="qs_google_client_id" class="regular-text" value="<?php echo esc_attr($settings['client_id']); ?>"></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="qs-google-client-secret"><?php echo esc_html__('Google Client Secret', 'quickslot'); ?></label></th>
+						<td><input type="text" id="qs-google-client-secret" name="qs_google_client_secret" class="regular-text" value="<?php echo esc_attr($settings['client_secret']); ?>"></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="qs-google-calendar-id"><?php echo esc_html__('Google Calendar ID', 'quickslot'); ?></label></th>
+						<td><input type="text" id="qs-google-calendar-id" name="qs_google_calendar_id" class="regular-text" value="<?php echo esc_attr($settings['calendar_id']); ?>"><p class="description"><?php echo esc_html__('Use primary to sync with the primary Google Calendar.', 'quickslot'); ?></p></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html__('Connection Status', 'quickslot'); ?></th>
+						<td><span class="qs-badge <?php echo $is_connected ? 'qs-badge--confirmed' : 'qs-badge--cancelled'; ?>"><?php echo esc_html($this->google_calendar->get_status_label()); ?></span></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<p class="submit">
+				<button type="submit" name="qs_save_calendar_settings" class="button button-primary"><?php echo esc_html__('Save Calendar Settings', 'quickslot'); ?></button>
+			</p>
+		</form>
+
+		<div class="qs-admin-form-card qs-settings-card">
+			<h2><?php echo esc_html__('Google Calendar Connection', 'quickslot'); ?></h2>
+			<?php if ($is_connected) : ?>
+				<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+					<?php wp_nonce_field('qs_google_disconnect'); ?>
+					<input type="hidden" name="action" value="quickslot_google_disconnect">
+					<p><button type="submit" class="button"><?php echo esc_html__('Disconnect', 'quickslot'); ?></button></p>
+				</form>
+			<?php else : ?>
+				<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+					<?php wp_nonce_field('qs_google_oauth_start'); ?>
+					<input type="hidden" name="action" value="quickslot_google_oauth_start">
+					<p><button type="submit" class="button button-primary"<?php disabled(! $is_library_available || '' === $settings['client_id'] || '' === $settings['client_secret']); ?>><?php echo esc_html__('Connect Google Calendar', 'quickslot'); ?></button></p>
+				</form>
+			<?php endif; ?>
+		</div>
 		<?php
 	}
 
@@ -225,6 +300,28 @@ final class QS_Settings_Admin {
 	}
 
 	/**
+	 * Saves Google Calendar settings.
+	 */
+	private function handle_calendar_save(): void {
+		check_admin_referer('qs_save_calendar_settings');
+
+		$client_id = isset($_POST['qs_google_client_id']) ? QS_Sanitizer::text(wp_unslash($_POST['qs_google_client_id'])) : '';
+		$client_secret = isset($_POST['qs_google_client_secret']) ? QS_Sanitizer::text(wp_unslash($_POST['qs_google_client_secret'])) : '';
+		$calendar_id = isset($_POST['qs_google_calendar_id']) ? QS_Sanitizer::text(wp_unslash($_POST['qs_google_calendar_id'])) : 'primary';
+
+		if ('' === $calendar_id) {
+			$calendar_id = 'primary';
+		}
+
+		update_option('qs_google_client_id', $client_id);
+		update_option('qs_google_client_secret', $client_secret);
+		update_option('qs_google_calendar_id', $calendar_id);
+
+		wp_safe_redirect($this->get_settings_url(array('tab' => 'calendar', 'qs_notice' => 'saved_calendar')));
+		exit;
+	}
+
+	/**
 	 * Saves reminder offsets.
 	 */
 	private function handle_reminders_save(): void {
@@ -266,8 +363,13 @@ final class QS_Settings_Admin {
 		$notice_key = QS_Sanitizer::text(wp_unslash($_GET['qs_notice']));
 		$notices    = array(
 			'saved_general'   => array('success', __('General settings saved.', 'quickslot')),
+			'saved_calendar'  => array('success', __('Google Calendar settings saved.', 'quickslot')),
 			'saved_templates' => array('success', __('Email templates saved.', 'quickslot')),
 			'saved_reminders' => array('success', __('Reminder settings saved.', 'quickslot')),
+			'google_connected' => array('success', __('Google Calendar connected.', 'quickslot')),
+			'google_disconnected' => array('success', __('Google Calendar disconnected.', 'quickslot')),
+			'google_connect_error' => array('error', __('Google Calendar could not be connected. Please verify your settings and try again.', 'quickslot')),
+			'google_library_missing' => array('error', __('Google API client library is missing. Run composer install to enable this integration.', 'quickslot')),
 			'invalid_email'   => array('error', __('Please enter a valid business email address.', 'quickslot')),
 			'invalid_offsets' => array('error', __('Please enter at least one positive reminder offset.', 'quickslot')),
 		);
@@ -291,6 +393,7 @@ final class QS_Settings_Admin {
 		return array(
 			'general'   => __('General Settings', 'quickslot'),
 			'email'     => __('Email Templates', 'quickslot'),
+			'calendar'  => __('Calendar', 'quickslot'),
 			'reminders' => __('Reminders', 'quickslot'),
 		);
 	}
