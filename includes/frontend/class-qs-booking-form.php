@@ -62,24 +62,44 @@ final class QS_Booking_Form {
 									<div class="qs-step-feedback" data-qs-feedback="time" aria-live="polite"></div>
 									<div class="qs-slot-options" data-qs-slots role="group" aria-label="<?php echo esc_attr__('Available times', 'quickslot'); ?>"></div>
 								<?php elseif ('details' === $step['slug']) : ?>
+									<div class="qs-step-feedback" data-qs-feedback="details" aria-live="polite"></div>
 									<div class="qs-form-grid">
 										<div class="qs-form-field">
 											<label for="qs-name"><?php echo esc_html__('Name', 'quickslot'); ?></label>
-											<input id="qs-name" type="text" placeholder="<?php echo esc_attr__('Your name', 'quickslot'); ?>">
+											<input id="qs-name" type="text" autocomplete="name" data-qs-field="customer_name" placeholder="<?php echo esc_attr__('Your name', 'quickslot'); ?>">
+											<p class="qs-field-error" data-qs-field-error="customer_name" hidden></p>
 										</div>
 										<div class="qs-form-field">
 											<label for="qs-email"><?php echo esc_html__('Email', 'quickslot'); ?></label>
-											<input id="qs-email" type="email" placeholder="<?php echo esc_attr__('you@example.com', 'quickslot'); ?>">
+											<input id="qs-email" type="email" autocomplete="email" data-qs-field="customer_email" placeholder="<?php echo esc_attr__('you@example.com', 'quickslot'); ?>">
+											<p class="qs-field-error" data-qs-field-error="customer_email" hidden></p>
+										</div>
+										<div class="qs-form-field">
+											<label for="qs-phone"><?php echo esc_html__('Phone', 'quickslot'); ?></label>
+											<input id="qs-phone" type="text" autocomplete="tel" data-qs-field="customer_phone" placeholder="<?php echo esc_attr__('Optional phone number', 'quickslot'); ?>">
+											<p class="qs-field-error" data-qs-field-error="customer_phone" hidden></p>
+										</div>
+										<div class="qs-form-field qs-honeypot-field" aria-hidden="true">
+											<label for="qs-website"><?php echo esc_html__('Website', 'quickslot'); ?></label>
+											<input id="qs-website" type="text" tabindex="-1" autocomplete="off" data-qs-field="website" class="qs-honeypot" aria-hidden="true">
+										</div>
+										<div class="qs-form-field qs-form-field--full">
+											<label for="qs-note"><?php echo esc_html__('Note', 'quickslot'); ?></label>
+											<textarea id="qs-note" rows="4" data-qs-field="customer_note" placeholder="<?php echo esc_attr__('Optional note for your booking', 'quickslot'); ?>"></textarea>
+											<p class="qs-field-error" data-qs-field-error="customer_note" hidden></p>
 										</div>
 									</div>
 								<?php elseif ('review' === $step['slug']) : ?>
+									<div class="qs-step-feedback" data-qs-feedback="review" aria-live="polite"></div>
 									<div class="qs-review-card">
-										<p><?php echo esc_html__('Your service, date, time, and details summary will appear here before confirmation.', 'quickslot'); ?></p>
+										<div data-qs-review-summary>
+											<p><?php echo esc_html__('Your service, date, time, and details summary will appear here before confirmation.', 'quickslot'); ?></p>
+										</div>
 									</div>
 								<?php elseif ('success' === $step['slug']) : ?>
 									<div class="qs-success-state">
-										<h4 class="qs-success-state__title"><?php echo esc_html__('Booking Placeholder', 'quickslot'); ?></h4>
-										<p><?php echo esc_html__('A real confirmation message will appear here once booking submission is implemented.', 'quickslot'); ?></p>
+										<h4 class="qs-success-state__title" data-qs-success-title><?php echo esc_html__('Booking Placeholder', 'quickslot'); ?></h4>
+										<p data-qs-success-message><?php echo esc_html__('A real confirmation message will appear here once booking submission is implemented.', 'quickslot'); ?></p>
 									</div>
 								<?php else : ?>
 									<div class="qs-placeholder-panel">
@@ -89,10 +109,12 @@ final class QS_Booking_Form {
 							</div>
 
 							<div class="qs-booking-step__actions">
-								<?php if ($index > 0) : ?>
+								<?php if ($index > 0 && 'success' !== $step['slug']) : ?>
 									<button type="button" class="qs-button qs-button--secondary" data-qs-nav="back"><?php echo esc_html__('Back', 'quickslot'); ?></button>
 								<?php endif; ?>
-								<?php if ($index < count($steps) - 1) : ?>
+								<?php if ('review' === $step['slug']) : ?>
+									<button type="button" class="qs-button" data-qs-confirm><?php echo esc_html__('Confirm Booking', 'quickslot'); ?></button>
+								<?php elseif ($index < count($steps) - 1) : ?>
 									<button type="button" class="qs-button" data-qs-nav="next"><?php echo esc_html__('Next', 'quickslot'); ?></button>
 								<?php endif; ?>
 							</div>

@@ -98,8 +98,11 @@ final class QuickSlot {
 	 */
 	private function init_rest(): void {
 		require_once QUICKSLOT_PATH . 'includes/core/class-qs-slot-generator.php';
+		require_once QUICKSLOT_PATH . 'includes/core/class-qs-availability-checker.php';
+		require_once QUICKSLOT_PATH . 'includes/core/class-qs-booking-handler.php';
 		require_once QUICKSLOT_PATH . 'includes/api/class-qs-services-endpoint.php';
 		require_once QUICKSLOT_PATH . 'includes/api/class-qs-availability-endpoint.php';
+		require_once QUICKSLOT_PATH . 'includes/api/class-qs-bookings-endpoint.php';
 		require_once QUICKSLOT_PATH . 'includes/api/class-qs-rest-controller.php';
 
 		$this->rest = new QS_REST_Controller();

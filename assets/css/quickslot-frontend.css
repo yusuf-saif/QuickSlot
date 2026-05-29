@@ -207,6 +207,72 @@
 	transition: border-color var(--qs-transition-fast), box-shadow var(--qs-transition-fast);
 }
 
+.qs-form-field textarea {
+	width: 100%;
+	padding: var(--qs-space-3) var(--qs-space-4);
+	border: 1px solid var(--qs-color-border);
+	border-radius: var(--qs-radius-md);
+	background: var(--qs-color-surface);
+	color: var(--qs-color-text);
+	font: inherit;
+	resize: vertical;
+	transition: border-color var(--qs-transition-fast), box-shadow var(--qs-transition-fast);
+}
+
+.qs-form-field--full {
+	grid-column: 1 / -1;
+}
+
+.qs-field-error {
+	margin: 0;
+	color: var(--qs-color-danger, #b42318);
+	font-size: var(--qs-font-size-sm);
+}
+
+.qs-honeypot {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.qs-honeypot-field {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+.qs-review-list {
+	display: grid;
+	gap: var(--qs-space-3);
+	margin: 0;
+}
+
+.qs-review-list__row {
+	display: grid;
+	gap: var(--qs-space-1);
+	padding-bottom: var(--qs-space-3);
+	border-bottom: 1px solid var(--qs-color-border);
+}
+
+.qs-review-list__row:last-child {
+	padding-bottom: 0;
+	border-bottom: 0;
+}
+
+.qs-review-list dt {
+	font-weight: var(--qs-font-weight-semibold);
+	color: var(--qs-color-muted);
+}
+
+.qs-review-list dd {
+	margin: 0;
+}
+
 .qs-button {
 	display: inline-flex;
 	align-items: center;
@@ -343,6 +409,7 @@
 
 .qs-booking-form button:focus-visible,
 .qs-booking-form input:focus-visible,
+.qs-booking-form textarea:focus-visible,
 .qs-service-card:focus-visible {
 	outline: none;
 	box-shadow: var(--qs-shadow-focus);

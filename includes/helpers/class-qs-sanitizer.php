@@ -31,6 +31,26 @@ final class QS_Sanitizer {
 	}
 
 	/**
+	 * Sanitizes email values.
+	 */
+	public static function email(string $value): string {
+		return sanitize_email($value);
+	}
+
+	/**
+	 * Sanitizes timezone values and falls back to an empty string.
+	 */
+	public static function timezone(string $value): string {
+		$value = sanitize_text_field($value);
+
+		if ('' === $value) {
+			return '';
+		}
+
+		return in_array($value, timezone_identifiers_list(), true) ? $value : '';
+	}
+
+	/**
 	 * Sanitizes an absolute integer value.
 	 */
 	public static function absint(string $value): int {
