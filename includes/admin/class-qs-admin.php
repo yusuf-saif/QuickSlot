@@ -34,16 +34,25 @@ final class QS_Admin {
 	private ?QS_Bookings_Admin $bookings_admin = null;
 
 	/**
+	 * Settings admin controller.
+	 *
+	 * @var QS_Settings_Admin|null
+	 */
+	private ?QS_Settings_Admin $settings_admin = null;
+
+	/**
 	 * Registers admin hooks.
 	 */
 	public function init(): void {
 		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-services-admin.php';
 		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-availability-admin.php';
 		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-bookings-admin.php';
+		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-settings-admin.php';
 
 		$this->services_admin = new QS_Services_Admin();
 		$this->availability_admin = new QS_Availability_Admin();
 		$this->bookings_admin = new QS_Bookings_Admin();
+		$this->settings_admin = new QS_Settings_Admin();
 
 		add_action('admin_menu', array($this, 'register_menu'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
@@ -135,7 +144,7 @@ final class QS_Admin {
 			QUICKSLOT_VERSION
 		);
 
-		if ('quickslot_page_quickslot-availability' !== $hook_suffix) {
+		if (! in_array($hook_suffix, array('quickslot_page_quickslot-availability', 'quickslot_page_quickslot-settings'), true)) {
 			return;
 		}
 
@@ -152,6 +161,8 @@ final class QS_Admin {
 			'quickslotAdmin',
 			array(
 				'removeBreakLabel' => esc_html__('Remove', 'quickslot'),
+				'removeReminderLabel' => esc_html__('Remove', 'quickslot'),
+				'reminderHoursSuffix' => esc_html__('hours before booking', 'quickslot'),
 			)
 		);
 	}
@@ -212,7 +223,9 @@ final class QS_Admin {
 	 * Renders the settings placeholder page.
 	 */
 	public function render_settings_page(): void {
-		$this->render_placeholder_page(esc_html__('Settings', 'quickslot'));
+		if ($this->settings_admin instanceof QS_Settings_Admin) {
+			$this->settings_admin->render_page();
+		}
 	}
 
 	/**

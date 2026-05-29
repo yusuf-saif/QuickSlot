@@ -65,6 +65,55 @@
 	border: 1px solid #dcdcde;
 }
 
+.qs-settings-card {
+	margin-top: 20px;
+}
+
+.qs-settings-tabs {
+	margin-top: 12px;
+}
+
+.qs-settings-note {
+	margin-top: 12px;
+}
+
+.qs-placeholder-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 20px;
+	align-items: center;
+}
+
+.qs-template-editor {
+	padding-top: 20px;
+	margin-top: 20px;
+	border-top: 1px solid #dcdcde;
+}
+
+.qs-template-editor:first-of-type {
+	padding-top: 0;
+	margin-top: 0;
+	border-top: 0;
+}
+
+.qs-reminder-offsets {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.qs-reminder-offset-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.qs-reminder-offset-row input {
+	width: 120px;
+}
+
 .qs-badge {
 	display: inline-block;
 	padding: 4px 10px;
