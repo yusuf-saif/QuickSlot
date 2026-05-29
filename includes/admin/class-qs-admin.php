@@ -27,14 +27,23 @@ final class QS_Admin {
 	private ?QS_Availability_Admin $availability_admin = null;
 
 	/**
+	 * Bookings admin controller.
+	 *
+	 * @var QS_Bookings_Admin|null
+	 */
+	private ?QS_Bookings_Admin $bookings_admin = null;
+
+	/**
 	 * Registers admin hooks.
 	 */
 	public function init(): void {
 		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-services-admin.php';
 		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-availability-admin.php';
+		require_once QUICKSLOT_PATH . 'includes/admin/class-qs-bookings-admin.php';
 
 		$this->services_admin = new QS_Services_Admin();
 		$this->availability_admin = new QS_Availability_Admin();
+		$this->bookings_admin = new QS_Bookings_Admin();
 
 		add_action('admin_menu', array($this, 'register_menu'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
@@ -194,7 +203,9 @@ final class QS_Admin {
 	 * Renders the bookings placeholder page.
 	 */
 	public function render_bookings_page(): void {
-		$this->render_placeholder_page(esc_html__('Bookings', 'quickslot'));
+		if ($this->bookings_admin instanceof QS_Bookings_Admin) {
+			$this->bookings_admin->render_page();
+		}
 	}
 
 	/**
