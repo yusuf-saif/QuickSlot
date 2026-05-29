@@ -104,6 +104,8 @@ final class QS_Services_Admin {
 			exit;
 		}
 
+		$this->clear_services_cache();
+
 		$notice = $service_id > 0 ? 'updated' : 'created';
 		wp_safe_redirect($this->get_services_url(array('qs_notice' => $notice)));
 		exit;
@@ -134,6 +136,10 @@ final class QS_Services_Admin {
 		$result  = $wpdb->query($sql);
 		$notice  = false === $result ? 'error' : 'deactivated';
 
+		if (false !== $result) {
+			$this->clear_services_cache();
+		}
+
 		wp_safe_redirect($this->get_services_url(array('qs_notice' => $notice)));
 		exit;
 	}
@@ -157,6 +163,10 @@ final class QS_Services_Admin {
 		$sql    = $wpdb->prepare("DELETE FROM {$table} WHERE id = %d", $service_id);
 		$result = $wpdb->query($sql);
 		$notice = false === $result ? 'error' : 'deleted';
+
+		if (false !== $result) {
+			$this->clear_services_cache();
+		}
 
 		wp_safe_redirect($this->get_services_url(array('qs_notice' => $notice)));
 		exit;
@@ -637,5 +647,12 @@ final class QS_Services_Admin {
 		}
 
 		return wp_strip_all_tags(wp_kses_post(wp_number_format((float) $price, 2)));
+	}
+
+	/**
+	 * Clears cached public service responses.
+	 */
+	private function clear_services_cache(): void {
+		delete_transient('qs_services_list');
 	}
 }

@@ -74,9 +74,10 @@ final class QS_Slot_Generator {
 		$date             = new DateTimeImmutable($date_ymd, $timezone);
 		$start_datetime   = new DateTimeImmutable($date_ymd . ' ' . $start_time, $timezone);
 		$end_datetime     = new DateTimeImmutable($date_ymd . ' ' . $end_time, $timezone);
-		$now              = current_datetime();
-		$step_minutes     = $duration_minutes + $buffer_minutes;
-		$slots            = array();
+		// UI slot generation uses the site/business timezone.
+		$now          = current_datetime();
+		$step_minutes = $duration_minutes + $buffer_minutes;
+		$slots        = array();
 
 		if ($end_datetime <= $start_datetime || $step_minutes < 1) {
 			return array();
@@ -186,18 +187,22 @@ final class QS_Slot_Generator {
 	private function get_existing_bookings(int $service_id, string $date_ymd): array {
 		global $wpdb;
 
-		$table      = $wpdb->prefix . 'qs_bookings';
-		$start_of_day = $date_ymd . ' 00:00:00';
-		$end_of_day   = $date_ymd . ' 23:59:59';
-		$query      = $wpdb->prepare(
+		$table         = $wpdb->prefix . 'qs_bookings';
+		$timezone      = wp_timezone();
+		$utc_timezone  = new DateTimeZone('UTC');
+		$start_of_day  = new DateTimeImmutable($date_ymd . ' 00:00:00', $timezone);
+		$end_of_day    = new DateTimeImmutable($date_ymd . ' 23:59:59', $timezone);
+		$start_utc     = $start_of_day->setTimezone($utc_timezone)->format('Y-m-d H:i:s');
+		$end_utc       = $end_of_day->setTimezone($utc_timezone)->format('Y-m-d H:i:s');
+		$query         = $wpdb->prepare(
 			"SELECT booking_start, booking_end FROM {$table} WHERE service_id = %d AND status IN (%s, %s) AND booking_start <= %s AND booking_end >= %s",
 			$service_id,
 			'pending',
 			'confirmed',
-			$end_of_day,
-			$start_of_day
+			$end_utc,
+			$start_utc
 		);
-		$rows       = $wpdb->get_results($query, ARRAY_A);
+		$rows          = $wpdb->get_results($query, ARRAY_A);
 
 		return is_array($rows) ? $rows : array();
 	}
@@ -275,17 +280,21 @@ final class QS_Slot_Generator {
 	 * @param array<int, array<string, string>> $bookings Existing booking windows.
 	 */
 	private function overlaps_bookings(DateTimeImmutable $slot_start, DateTimeImmutable $slot_end, array $bookings): bool {
-		$timezone = wp_timezone();
+		$utc_timezone = new DateTimeZone('UTC');
+
+		// Booking datetimes are stored in UTC in the database.
+		$slot_start_utc = $slot_start->setTimezone($utc_timezone);
+		$slot_end_utc   = $slot_end->setTimezone($utc_timezone);
 
 		foreach ($bookings as $booking) {
 			if (! isset($booking['booking_start'], $booking['booking_end'])) {
 				continue;
 			}
 
-			$booking_start = new DateTimeImmutable((string) $booking['booking_start'], $timezone);
-			$booking_end   = new DateTimeImmutable((string) $booking['booking_end'], $timezone);
+			$booking_start = new DateTimeImmutable((string) $booking['booking_start'], $utc_timezone);
+			$booking_end   = new DateTimeImmutable((string) $booking['booking_end'], $utc_timezone);
 
-			if ($slot_start < $booking_end && $slot_end > $booking_start) {
+			if ($slot_start_utc < $booking_end && $slot_end_utc > $booking_start) {
 				return true;
 			}
 		}

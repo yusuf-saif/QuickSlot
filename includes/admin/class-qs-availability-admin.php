@@ -304,6 +304,10 @@ final class QS_Availability_Admin {
 			}
 		}
 
+		if ($success) {
+			$this->clear_availability_caches();
+		}
+
 		wp_safe_redirect(
 			$this->get_availability_url(
 				array(
@@ -386,6 +390,10 @@ final class QS_Availability_Admin {
 
 		$result = $wpdb->query($sql);
 
+		if (false !== $result) {
+			$this->clear_availability_caches();
+		}
+
 		wp_safe_redirect(
 			$this->get_availability_url(
 				array(
@@ -414,6 +422,10 @@ final class QS_Availability_Admin {
 		$table  = $wpdb->prefix . 'qs_availability_exceptions';
 		$sql    = $wpdb->prepare("DELETE FROM {$table} WHERE id = %d", $exception_id);
 		$result = $wpdb->query($sql);
+
+		if (false !== $result) {
+			$this->clear_availability_caches();
+		}
 
 		wp_safe_redirect(
 			$this->get_availability_url(
@@ -827,5 +839,32 @@ final class QS_Availability_Admin {
 			),
 			'qs_delete_availability_exception_' . $exception_id
 		);
+	}
+
+	/**
+	 * Clears cached availability date and slot responses.
+	 *
+	 * Best effort: removes matching transient rows by prefix. If any are missed,
+	 * the short TTLs still limit stale availability.
+	 */
+	private function clear_availability_caches(): void {
+		global $wpdb;
+
+		$option_table = $wpdb->options;
+		$patterns     = array(
+			$wpdb->esc_like('_transient_qs_dates_') . '%',
+			$wpdb->esc_like('_transient_timeout_qs_dates_') . '%',
+			$wpdb->esc_like('_transient_qs_slots_') . '%',
+			$wpdb->esc_like('_transient_timeout_qs_slots_') . '%',
+		);
+
+		foreach ($patterns as $pattern) {
+			$wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$option_table} WHERE option_name LIKE %s",
+					$pattern
+				)
+			);
+		}
 	}
 }
