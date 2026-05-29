@@ -490,7 +490,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 
 		if (successMessage) {
-			successMessage.textContent = text('bookingSuccess', 'Your booking has been received. Booking ID: %s').replace('%s', String(state.bookingId || 0));
+			if (state.bookingId) {
+				successMessage.textContent = text('bookingSuccess', 'Your booking has been received. Booking ID: %s').replace('%s', String(state.bookingId));
+			} else {
+				successMessage.textContent = text('bookingConfirmed', 'Booking Confirmed');
+			}
 		}
 	}
 
@@ -746,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			updateStepActions();
 
 			if (result.ok && result.body && result.body.success === true) {
-				state.bookingId = result.body.data && result.body.data.booking_id ? result.body.data.booking_id : 0;
+				state.bookingId = result.body.data && result.body.data.booking_id ? result.body.data.booking_id : null;
 				renderSuccess();
 				setActiveStep(stepIndexes.success);
 				return;

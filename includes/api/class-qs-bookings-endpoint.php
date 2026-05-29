@@ -99,10 +99,10 @@ final class QS_Bookings_Endpoint {
 				array(
 					'success' => true,
 					'data'    => array(
-						'booking_id' => 0,
+						'spam_ignored' => true,
 					),
 				),
-				201
+				200
 			);
 		}
 
