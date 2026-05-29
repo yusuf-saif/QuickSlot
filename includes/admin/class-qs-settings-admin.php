@@ -192,6 +192,7 @@ final class QS_Settings_Admin {
 		$is_connected = $this->google_calendar->is_connected();
 		$is_library_available = $this->google_calendar->is_library_available();
 		$connection_details = $this->google_calendar->get_connection_details();
+		$redirect_uri = $this->google_calendar->get_oauth_redirect_uri();
 		?>
 		<details class="notice notice-info inline">
 			<summary><strong><?php echo esc_html__('View Setup Guide', 'quickslot'); ?></strong></summary>
@@ -307,6 +308,17 @@ final class QS_Settings_Admin {
 					<tr>
 						<th scope="row"><label for="qs-google-calendar-id"><?php echo esc_html__('Google Calendar ID', 'quickslot'); ?></label></th>
 						<td><input type="text" id="qs-google-calendar-id" name="qs_google_calendar_id" class="regular-text" value="<?php echo esc_attr($settings['calendar_id']); ?>"><p class="description"><?php echo esc_html__('Use primary to sync with the primary Google Calendar.', 'quickslot'); ?></p></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="qs-google-redirect-uri"><?php echo esc_html__('Redirect URI', 'quickslot'); ?></label></th>
+						<td>
+							<div class="qs-copy-field">
+								<input type="text" id="qs-google-redirect-uri" class="regular-text code" value="<?php echo esc_attr($redirect_uri); ?>" readonly data-qs-copy-input>
+								<button type="button" class="button" data-qs-copy-button data-qs-copy-target="#qs-google-redirect-uri"><?php echo esc_html__('Copy', 'quickslot'); ?></button>
+								<span class="qs-copy-feedback" data-qs-copy-feedback aria-live="polite"></span>
+							</div>
+							<p class="description"><?php echo esc_html__("Copy this URL into your Google OAuth application's Authorized redirect URIs field.", 'quickslot'); ?></p>
+						</td>
 					</tr>
 				</tbody>
 			</table>

@@ -161,6 +161,32 @@ jQuery(function ($) {
 		updateDesignPreview();
 	}
 
+	function copyToClipboard(value) {
+		if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+			return navigator.clipboard.writeText(value);
+		}
+
+		return new Promise(function (resolve, reject) {
+			var tempInput = document.createElement('input');
+			tempInput.type = 'text';
+			tempInput.value = value;
+			document.body.appendChild(tempInput);
+			tempInput.select();
+
+			try {
+				if (document.execCommand('copy')) {
+					resolve();
+				} else {
+					reject();
+				}
+			} catch (error) {
+				reject(error);
+			}
+
+			document.body.removeChild(tempInput);
+		});
+	}
+
 	$(document).on('click', '.qs-add-break', function () {
 		var day = $(this).data('day');
 		$(this).siblings('.qs-breaks').append(buildBreakRow(day));
@@ -182,6 +208,29 @@ jQuery(function ($) {
 
 	$(document).on('click', '.qs-insert-placeholder', function () {
 		insertPlaceholder($(this).data('placeholder'));
+	});
+
+	$(document).on('click', '[data-qs-copy-button]', function () {
+		var $button = $(this);
+		var $target = $($button.attr('data-qs-copy-target'));
+		var $feedback = $button.siblings('[data-qs-copy-feedback]');
+
+		if (! $target.length) {
+			return;
+		}
+
+		copyToClipboard(String($target.val() || ''))
+			.then(function () {
+				if ($feedback.length) {
+					$feedback.text(quickslotAdmin.copiedLabel || 'Copied!');
+					window.setTimeout(function () {
+						$feedback.text('');
+					}, 2000);
+				}
+			})
+			.catch(function () {
+				$target.trigger('focus').trigger('select');
+			});
 	});
 
 	$(document).on('change', '[data-qs-use-site-theme]', function () {

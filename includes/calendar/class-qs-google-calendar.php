@@ -120,6 +120,13 @@ final class QS_Google_Calendar {
 	}
 
 	/**
+	 * Returns the OAuth redirect URI for setup.
+	 */
+	public function get_oauth_redirect_uri(): string {
+		return $this->get_redirect_uri();
+	}
+
+	/**
 	 * Builds an OAuth authorization URL.
 	 *
 	 * @return string|WP_Error

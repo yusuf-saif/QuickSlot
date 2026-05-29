@@ -167,6 +167,7 @@ final class QS_Admin {
 				'removeBreakLabel' => esc_html__('Remove', 'quickslot'),
 				'removeReminderLabel' => esc_html__('Remove', 'quickslot'),
 				'reminderHoursSuffix' => esc_html__('hours before booking', 'quickslot'),
+				'copiedLabel' => esc_html__('Copied!', 'quickslot'),
 			)
 		);
 	}

@@ -154,6 +154,23 @@
 	margin-bottom: 8px;
 }
 
+.qs-copy-field {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.qs-copy-field .regular-text {
+	max-width: 100%;
+	flex: 1 1 320px;
+}
+
+.qs-copy-feedback {
+	color: #0f5132;
+	font-weight: 600;
+}
+
 .qs-design-preview .qs-button,
 .qs-design-preview .qs-slot-button {
 	display: inline-flex;
