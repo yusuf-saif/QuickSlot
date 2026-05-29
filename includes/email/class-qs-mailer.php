@@ -66,6 +66,9 @@ final class QS_Mailer {
 		$template  = $this->templates->get_template($type);
 		$recipient = sanitize_email($recipient);
 		$booking   = $this->get_booking_email_data($booking_id, $extra);
+		$headers   = array('Content-Type: text/html; charset=UTF-8');
+		$attachments = array();
+		$temp_ics_path = '';
 
 		if ('' === $recipient || ! is_email($recipient) || '' === $template['subject'] || '' === $template['body'] || empty($booking)) {
 			QS_Email_Logger::log($booking_id, $type, $recipient, $template['subject'], 'failed');
@@ -74,7 +77,15 @@ final class QS_Mailer {
 
 		$subject = wp_strip_all_tags($this->templates->replace_placeholders($template['subject'], $booking));
 		$body    = wp_kses_post($this->templates->replace_placeholders($template['body'], $booking));
-		$headers = array('Content-Type: text/html; charset=UTF-8');
+
+		if ('confirmation' === $type) {
+			$ics_path = QS_ICS_Generator::instance()->create_temp_file($booking_id);
+
+			if (is_string($ics_path) && '' !== $ics_path) {
+				$temp_ics_path = $ics_path;
+				$attachments[] = $ics_path;
+			}
+		}
 
 		$this->from_name  = (string) $booking['business_name'];
 		$this->from_email = (string) $booking['business_email'];
@@ -92,10 +103,14 @@ final class QS_Mailer {
 		 */
 		do_action('quickslot_before_send_email', $type, $recipient, $booking_id, $booking);
 
-		$sent = wp_mail($recipient, $subject, $body, $headers);
+		$sent = wp_mail($recipient, $subject, $body, $headers, $attachments);
 
 		remove_filter('wp_mail_from', array($this, 'filter_from_email'));
 		remove_filter('wp_mail_from_name', array($this, 'filter_from_name'));
+
+		if ('' !== $temp_ics_path && file_exists($temp_ics_path)) {
+			wp_delete_file($temp_ics_path);
+		}
 
 		QS_Email_Logger::log($booking_id, $type, $recipient, $subject, $sent ? 'sent' : 'failed');
 

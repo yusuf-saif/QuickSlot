@@ -144,6 +144,29 @@ final class QS_ICS_Generator {
 	}
 
 	/**
+	 * Creates a temporary ICS file for a booking.
+	 *
+	 * @return string|WP_Error
+	 */
+	public function create_temp_file(int $booking_id) {
+		$content = $this->generate($booking_id);
+
+		if ($content instanceof WP_Error) {
+			return $content;
+		}
+
+		$directory = get_temp_dir();
+		$path      = trailingslashit($directory) . 'quickslot-appointment-' . $booking_id . '.ics';
+		$written   = @file_put_contents($path, $content);
+
+		if (false === $written) {
+			return new WP_Error('ics_temp_write_failed', __('Unable to create calendar file.', 'quickslot'));
+		}
+
+		return $path;
+	}
+
+	/**
 	 * Registers ICS query vars.
 	 *
 	 * @param array<int, string> $vars Existing vars.
