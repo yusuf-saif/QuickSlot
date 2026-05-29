@@ -121,6 +121,7 @@ final class QS_Frontend {
 					'submitting'     => __('Submitting...', 'quickslot'),
 					'bookingConfirmed' => __('Booking Confirmed', 'quickslot'),
 					'bookingSuccess'   => __('Your booking has been received. Booking ID: %s', 'quickslot'),
+					'downloadCalendar' => __('Download Calendar Invite', 'quickslot'),
 					'slotUnavailable'  => __('This time slot is no longer available.', 'quickslot'),
 					'validationMessage' => __('Please review the highlighted fields and try again.', 'quickslot'),
 					'serviceLabel'      => __('Service', 'quickslot'),

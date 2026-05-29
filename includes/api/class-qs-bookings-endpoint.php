@@ -27,11 +27,19 @@ final class QS_Bookings_Endpoint {
 	private QS_Availability_Checker $availability_checker;
 
 	/**
+	 * ICS generator.
+	 *
+	 * @var QS_ICS_Generator
+	 */
+	private QS_ICS_Generator $ics_generator;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->booking_handler      = new QS_Booking_Handler();
 		$this->availability_checker = new QS_Availability_Checker();
+		$this->ics_generator        = QS_ICS_Generator::instance();
 	}
 
 	/**
@@ -172,6 +180,7 @@ final class QS_Bookings_Endpoint {
 				'success' => true,
 				'data'    => array(
 					'booking_id' => (int) $booking_id,
+					'ics_url'    => $this->ics_generator->get_download_url((int) $booking_id),
 				),
 			),
 			201

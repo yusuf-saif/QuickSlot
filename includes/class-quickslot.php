@@ -118,9 +118,11 @@ final class QuickSlot {
 		require_once QUICKSLOT_PATH . 'includes/email/class-qs-email-logger.php';
 		require_once QUICKSLOT_PATH . 'includes/email/class-qs-mailer.php';
 		require_once QUICKSLOT_PATH . 'includes/email/class-qs-reminder-scheduler.php';
+		require_once QUICKSLOT_PATH . 'includes/calendar/class-qs-ics-generator.php';
 
 		QS_Mailer::instance();
 		QS_Reminder_Scheduler::instance();
+		QS_ICS_Generator::instance();
 	}
 
 	/**

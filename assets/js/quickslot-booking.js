@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		availableDates: [],
 		slots: [],
 		bookingId: null,
+		icsUrl: '',
 		isSubmitting: false,
 		requests: {
 			dates: 0,
@@ -490,10 +491,22 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 
 		if (successMessage) {
-			if (state.bookingId) {
-				successMessage.textContent = text('bookingSuccess', 'Your booking has been received. Booking ID: %s').replace('%s', String(state.bookingId));
-			} else {
-				successMessage.textContent = text('bookingConfirmed', 'Booking Confirmed');
+			successMessage.innerHTML = '';
+
+			var messageText = state.bookingId
+				? text('bookingSuccess', 'Your booking has been received. Booking ID: %s').replace('%s', String(state.bookingId))
+				: text('bookingConfirmed', 'Booking Confirmed');
+			var textNode = document.createTextNode(messageText);
+
+			successMessage.appendChild(textNode);
+
+			if (state.icsUrl) {
+				successMessage.appendChild(document.createTextNode(' '));
+				var link = document.createElement('a');
+				link.href = state.icsUrl;
+				link.textContent = text('downloadCalendar', 'Download Calendar Invite');
+				link.rel = 'noopener';
+				successMessage.appendChild(link);
 			}
 		}
 	}
@@ -751,6 +764,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			if (result.ok && result.body && result.body.success === true) {
 				state.bookingId = result.body.data && result.body.data.booking_id ? result.body.data.booking_id : null;
+				state.icsUrl = result.body.data && result.body.data.ics_url ? result.body.data.ics_url : '';
 				renderSuccess();
 				setActiveStep(stepIndexes.success);
 				return;
