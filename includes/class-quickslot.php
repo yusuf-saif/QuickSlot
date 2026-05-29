@@ -63,6 +63,7 @@ final class QuickSlot {
 	public function init(): void {
 		add_action('plugins_loaded', array($this, 'load_textdomain'));
 		add_action('plugins_loaded', array($this, 'maybe_upgrade_database'));
+		$this->init_design();
 		$this->init_email();
 		$this->init_calendar();
 		$this->init_rest();
@@ -133,6 +134,17 @@ final class QuickSlot {
 
 		QS_ICS_Generator::instance();
 		QS_Google_Calendar::instance();
+	}
+
+	/**
+	 * Loads design system functionality.
+	 */
+	private function init_design(): void {
+		require_once QUICKSLOT_PATH . 'includes/design/class-qs-color-settings.php';
+		require_once QUICKSLOT_PATH . 'includes/design/class-qs-design-system.php';
+
+		$design_system = new QS_Design_System();
+		$design_system->init();
 	}
 
 	/**

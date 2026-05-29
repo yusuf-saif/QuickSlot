@@ -34,12 +34,20 @@ final class QS_Settings_Admin {
 	private QS_Google_Calendar $google_calendar;
 
 	/**
+	 * Color settings helper.
+	 *
+	 * @var QS_Color_Settings
+	 */
+	private QS_Color_Settings $color_settings;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->templates = new QS_Email_Templates();
 		$this->reminders = QS_Reminder_Scheduler::instance();
 		$this->google_calendar = QS_Google_Calendar::instance();
+		$this->color_settings = new QS_Color_Settings();
 	}
 
 	/**
@@ -70,6 +78,8 @@ final class QS_Settings_Admin {
 				<?php $this->render_email_tab(); ?>
 			<?php elseif ('calendar' === $active_tab) : ?>
 				<?php $this->render_calendar_tab(); ?>
+			<?php elseif ('colors' === $active_tab) : ?>
+				<?php $this->render_colors_tab(); ?>
 			<?php else : ?>
 				<?php $this->render_reminders_tab(); ?>
 			<?php endif; ?>
@@ -97,6 +107,11 @@ final class QS_Settings_Admin {
 
 		if (isset($_POST['qs_save_calendar_settings'])) {
 			$this->handle_calendar_save();
+			return;
+		}
+
+		if (isset($_POST['qs_save_color_settings'])) {
+			$this->handle_color_settings_save();
 			return;
 		}
 
@@ -255,6 +270,57 @@ final class QS_Settings_Admin {
 	}
 
 	/**
+	 * Renders the Colors tab.
+	 */
+	private function render_colors_tab(): void {
+		$settings = $this->color_settings->get();
+		?>
+		<form method="post" action="<?php echo esc_url($this->get_settings_url(array('tab' => 'colors'))); ?>" class="qs-admin-form-card qs-settings-card">
+			<?php wp_nonce_field('qs_save_color_settings'); ?>
+
+			<table class="form-table" role="presentation">
+				<tbody>
+					<tr>
+						<th scope="row"><?php echo esc_html__('Use Site Design System', 'quickslot'); ?></th>
+						<td>
+							<label for="qs-use-site-theme">
+								<input type="checkbox" id="qs-use-site-theme" name="qs_color_settings[use_site_theme]" value="1" <?php checked(! empty($settings['use_site_theme'])); ?> data-qs-use-site-theme>
+								<?php echo esc_html__('Inherit colors and basic visual tokens from the active theme when possible.', 'quickslot'); ?>
+							</label>
+							<p class="description qs-color-theme-note" data-qs-theme-note><?php echo esc_html__('When enabled, QuickSlot will use common WordPress and theme color variables instead of custom primary/accent colors.', 'quickslot'); ?></p>
+						</td>
+					</tr>
+					<tr class="qs-color-picker-row" data-qs-color-row>
+						<th scope="row"><label for="qs-color-primary"><?php echo esc_html__('Primary Color', 'quickslot'); ?></label></th>
+						<td><input type="text" id="qs-color-primary" name="qs_color_settings[primary]" value="<?php echo esc_attr((string) $settings['primary']); ?>" class="qs-color-picker" data-default-color="#6366F1" data-qs-primary-color></td>
+					</tr>
+					<tr class="qs-color-picker-row" data-qs-color-row>
+						<th scope="row"><label for="qs-color-accent"><?php echo esc_html__('Accent Color', 'quickslot'); ?></label></th>
+						<td><input type="text" id="qs-color-accent" name="qs_color_settings[accent]" value="<?php echo esc_attr((string) $settings['accent']); ?>" class="qs-color-picker" data-default-color="#8B5CF6" data-qs-accent-color></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="qs-design-preview" data-qs-design-preview>
+				<h2><?php echo esc_html__('Preview', 'quickslot'); ?></h2>
+				<div class="qs-design-preview__group">
+					<button type="button" class="qs-button"><?php echo esc_html__('Primary Button', 'quickslot'); ?></button>
+					<button type="button" class="qs-slot-button is-selected"><?php echo esc_html__('Sample Slot', 'quickslot'); ?></button>
+					<span class="qs-badge qs-badge--confirmed"><?php echo esc_html__('Confirmed', 'quickslot'); ?></span>
+				</div>
+				<div class="qs-service-card is-selected qs-design-preview__card">
+					<span class="qs-service-card__title"><?php echo esc_html__('Sample Service Card', 'quickslot'); ?></span>
+					<span class="qs-service-card__meta"><?php echo esc_html__('60 minutes', 'quickslot'); ?></span>
+					<span class="qs-service-card__price"><?php echo esc_html__('Price: 75', 'quickslot'); ?></span>
+				</div>
+			</div>
+
+			<p class="submit"><button type="submit" name="qs_save_color_settings" class="button button-primary"><?php echo esc_html__('Save Colors', 'quickslot'); ?></button></p>
+		</form>
+		<?php
+	}
+
+	/**
 	 * Saves general settings.
 	 */
 	private function handle_general_save(): void {
@@ -353,6 +419,19 @@ final class QS_Settings_Admin {
 	}
 
 	/**
+	 * Saves color settings.
+	 */
+	private function handle_color_settings_save(): void {
+		check_admin_referer('qs_save_color_settings');
+
+		$submitted = isset($_POST['qs_color_settings']) && is_array($_POST['qs_color_settings']) ? wp_unslash($_POST['qs_color_settings']) : array();
+		$this->color_settings->save($submitted);
+
+		wp_safe_redirect($this->get_settings_url(array('tab' => 'colors', 'qs_notice' => 'saved_colors')));
+		exit;
+	}
+
+	/**
 	 * Renders settings notices.
 	 */
 	private function render_notice(): void {
@@ -364,6 +443,7 @@ final class QS_Settings_Admin {
 		$notices    = array(
 			'saved_general'   => array('success', __('General settings saved.', 'quickslot')),
 			'saved_calendar'  => array('success', __('Google Calendar settings saved.', 'quickslot')),
+			'saved_colors'    => array('success', __('Color settings saved.', 'quickslot')),
 			'saved_templates' => array('success', __('Email templates saved.', 'quickslot')),
 			'saved_reminders' => array('success', __('Reminder settings saved.', 'quickslot')),
 			'google_connected' => array('success', __('Google Calendar connected.', 'quickslot')),
@@ -394,6 +474,7 @@ final class QS_Settings_Admin {
 			'general'   => __('General Settings', 'quickslot'),
 			'email'     => __('Email Templates', 'quickslot'),
 			'calendar'  => __('Calendar', 'quickslot'),
+			'colors'    => __('Colors', 'quickslot'),
 			'reminders' => __('Reminders', 'quickslot'),
 		);
 	}

@@ -144,6 +144,10 @@ final class QS_Admin {
 			QUICKSLOT_VERSION
 		);
 
+		if ('quickslot_page_quickslot-settings' === $hook_suffix) {
+			wp_enqueue_style('wp-color-picker');
+		}
+
 		if (! in_array($hook_suffix, array('quickslot_page_quickslot-availability', 'quickslot_page_quickslot-settings'), true)) {
 			return;
 		}
@@ -151,7 +155,7 @@ final class QS_Admin {
 		wp_enqueue_script(
 			'quickslot-admin',
 			QUICKSLOT_URL . 'assets/js/quickslot-admin.js',
-			array('jquery'),
+			array('jquery', 'wp-color-picker'),
 			QUICKSLOT_VERSION,
 			true
 		);

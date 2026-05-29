@@ -114,6 +114,103 @@
 	width: 120px;
 }
 
+.qs-design-preview {
+	margin-top: 20px;
+	padding: 20px;
+	border: 1px solid #dcdcde;
+	border-radius: 12px;
+	background: var(--qs-color-surface, #ffffff);
+	color: var(--qs-color-text, #0f172a);
+	font-family: var(--qs-font-family-base, Inter, "Segoe UI", sans-serif);
+	--qs-color-primary: var(--qs-color-primary, #6366F1);
+	--qs-color-primary-hover: var(--qs-color-primary-hover, #4F46E5);
+	--qs-color-primary-light: var(--qs-color-primary-light, #E0E7FF);
+	--qs-color-accent: var(--qs-color-accent, #8B5CF6);
+	--qs-color-text: var(--qs-color-text, #0f172a);
+	--qs-color-surface: var(--qs-color-surface, #ffffff);
+	--qs-color-border: var(--qs-color-border, #dbe3ef);
+	--qs-shadow-focus: var(--qs-shadow-focus, 0 0 0 3px rgba(99, 102, 241, 0.24));
+}
+
+.qs-design-preview__group {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.qs-design-preview__card {
+	max-width: 320px;
+}
+
+.qs-color-theme-note {
+	max-width: 640px;
+}
+
+.qs-design-preview .qs-button,
+.qs-design-preview .qs-slot-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 2.75rem;
+	padding: 0 1.25rem;
+	border: 1px solid var(--qs-color-primary);
+	border-radius: 9999px;
+	background: var(--qs-color-primary);
+	color: #ffffff;
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.qs-design-preview .qs-slot-button {
+	background: var(--qs-color-surface);
+	color: var(--qs-color-text);
+	border-color: var(--qs-color-border);
+	border-radius: 0.875rem;
+	padding: 0.75rem 1rem;
+	min-height: 3rem;
+}
+
+.qs-design-preview .qs-slot-button.is-selected {
+	border-color: var(--qs-color-primary);
+	background: var(--qs-color-primary-light);
+	box-shadow: var(--qs-shadow-focus);
+}
+
+.qs-design-preview .qs-service-card {
+	display: grid;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 1.25rem;
+	border: 1px solid var(--qs-color-border);
+	border-radius: 0.875rem;
+	background: var(--qs-color-surface);
+	box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+.qs-design-preview .qs-service-card.is-selected {
+	border-color: var(--qs-color-primary);
+	box-shadow: var(--qs-shadow-focus);
+}
+
+.qs-design-preview .qs-service-card__title {
+	font-size: 1.125rem;
+	font-weight: 600;
+}
+
+.qs-design-preview .qs-service-card__meta {
+	color: var(--qs-color-accent);
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+
+.qs-design-preview .qs-service-card__price {
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+
 .qs-badge {
 	display: inline-block;
 	padding: 4px 10px;
