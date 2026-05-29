@@ -58,6 +58,13 @@
 	grid-column: span 2;
 }
 
+.qs-admin-form-card {
+	max-width: 960px;
+	padding: 20px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+}
+
 .qs-badge {
 	display: inline-block;
 	padding: 4px 10px;

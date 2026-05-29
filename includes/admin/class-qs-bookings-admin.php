@@ -25,6 +25,13 @@ final class QS_Bookings_Admin {
 	private array $allowed_statuses = array('pending', 'confirmed', 'cancelled', 'completed', 'no-show');
 
 	/**
+	 * Allowed admin-created statuses.
+	 *
+	 * @var array<int, string>
+	 */
+	private array $admin_create_statuses = array('pending', 'confirmed');
+
+	/**
 	 * Renders the bookings admin page.
 	 */
 	public function render_page(): void {
@@ -33,10 +40,20 @@ final class QS_Bookings_Admin {
 		}
 
 		$this->handle_actions();
+
+		if ('export' === $this->get_action()) {
+			$this->handle_export();
+		}
+
 		$this->render_notice();
 
 		if ('view' === $this->get_action()) {
 			$this->render_detail_page();
+			return;
+		}
+
+		if ('add' === $this->get_action()) {
+			$this->render_add_page();
 			return;
 		}
 
@@ -51,11 +68,14 @@ final class QS_Bookings_Admin {
 			return;
 		}
 
-		if (! isset($_POST['qs_booking_status_submit'])) {
+		if (isset($_POST['qs_booking_status_submit'])) {
+			$this->handle_status_update();
 			return;
 		}
 
-		$this->handle_status_update();
+		if (isset($_POST['qs_admin_booking_submit'])) {
+			$this->handle_admin_booking_create();
+		}
 	}
 
 	/**
@@ -67,7 +87,10 @@ final class QS_Bookings_Admin {
 
 		?>
 		<div class="wrap qs-admin-page qs-bookings-admin">
-			<h1><?php echo esc_html__('Bookings', 'quickslot'); ?></h1>
+			<h1 class="wp-heading-inline"><?php echo esc_html__('Bookings', 'quickslot'); ?></h1>
+			<a href="<?php echo esc_url($this->get_bookings_url(array('action' => 'add'))); ?>" class="page-title-action"><?php echo esc_html__('Add Booking', 'quickslot'); ?></a>
+			<a href="<?php echo esc_url($this->get_export_url()); ?>" class="page-title-action"><?php echo esc_html__('Export CSV', 'quickslot'); ?></a>
+			<hr class="wp-header-end">
 
 			<form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>" class="qs-admin-filters">
 				<input type="hidden" name="page" value="quickslot-bookings">
@@ -146,6 +169,92 @@ final class QS_Bookings_Admin {
 			</table>
 
 			<?php $this->render_pagination((int) $page_data['total_items'], (int) $page_data['current_page'], (int) $page_data['total_pages']); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Renders the add booking page.
+	 *
+	 * @param array<string, string|int>|null $form_data Form data.
+	 * @param array<int, string>             $errors    Validation errors.
+	 */
+	private function render_add_page(?array $form_data = null, array $errors = array()): void {
+		if (null === $form_data) {
+			$form_data = $this->get_default_booking_form_data();
+		}
+
+		?>
+		<div class="wrap qs-admin-page qs-bookings-admin">
+			<h1><?php echo esc_html__('Add Booking', 'quickslot'); ?></h1>
+			<p><a href="<?php echo esc_url($this->get_bookings_url()); ?>">&larr; <?php echo esc_html__('Back to bookings', 'quickslot'); ?></a></p>
+
+			<?php if (! empty($errors)) : ?>
+				<div class="notice notice-error"><ul>
+					<?php foreach ($errors as $error) : ?>
+						<li><?php echo esc_html($error); ?></li>
+					<?php endforeach; ?>
+				</ul></div>
+			<?php endif; ?>
+
+			<form method="post" action="<?php echo esc_url($this->get_bookings_url(array('action' => 'add'))); ?>" class="qs-admin-form-card">
+				<?php wp_nonce_field('qs_create_admin_booking'); ?>
+
+				<table class="form-table" role="presentation">
+					<tbody>
+						<tr>
+							<th scope="row"><label for="qs-admin-service-id"><?php echo esc_html__('Service', 'quickslot'); ?></label></th>
+							<td>
+								<select id="qs-admin-service-id" name="service_id" required>
+									<option value="0"><?php echo esc_html__('Select a service', 'quickslot'); ?></option>
+									<?php foreach ($this->get_active_services() as $service) : ?>
+										<option value="<?php echo esc_attr((string) $service->id); ?>" <?php selected((int) $form_data['service_id'], (int) $service->id); ?>><?php echo esc_html($service->name); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="qs-admin-booking-date"><?php echo esc_html__('Booking Date', 'quickslot'); ?></label></th>
+							<td><input type="date" id="qs-admin-booking-date" name="booking_date" required value="<?php echo esc_attr((string) $form_data['booking_date']); ?>"></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="qs-admin-booking-time"><?php echo esc_html__('Booking Time', 'quickslot'); ?></label></th>
+							<td><input type="time" id="qs-admin-booking-time" name="booking_time" required value="<?php echo esc_attr((string) $form_data['booking_time']); ?>"></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="qs-admin-customer-name"><?php echo esc_html__('Customer Name', 'quickslot'); ?></label></th>
+							<td><input type="text" id="qs-admin-customer-name" name="customer_name" class="regular-text" required value="<?php echo esc_attr((string) $form_data['customer_name']); ?>"></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="qs-admin-customer-email"><?php echo esc_html__('Customer Email', 'quickslot'); ?></label></th>
+							<td><input type="email" id="qs-admin-customer-email" name="customer_email" class="regular-text" required value="<?php echo esc_attr((string) $form_data['customer_email']); ?>"></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="qs-admin-customer-phone"><?php echo esc_html__('Customer Phone', 'quickslot'); ?></label></th>
+							<td><input type="text" id="qs-admin-customer-phone" name="customer_phone" class="regular-text" value="<?php echo esc_attr((string) $form_data['customer_phone']); ?>"></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="qs-admin-customer-note"><?php echo esc_html__('Customer Note', 'quickslot'); ?></label></th>
+							<td><textarea id="qs-admin-customer-note" name="customer_note" class="large-text" rows="5"><?php echo esc_textarea((string) $form_data['customer_note']); ?></textarea></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="qs-admin-booking-status"><?php echo esc_html__('Status', 'quickslot'); ?></label></th>
+							<td>
+								<select id="qs-admin-booking-status" name="status">
+									<?php foreach ($this->admin_create_statuses as $status) : ?>
+										<option value="<?php echo esc_attr($status); ?>" <?php selected((string) $form_data['status'], $status); ?>><?php echo esc_html($this->get_status_label($status)); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
+				<p class="submit">
+					<button type="submit" name="qs_admin_booking_submit" class="button button-primary"><?php echo esc_html__('Create Booking', 'quickslot'); ?></button>
+					<a href="<?php echo esc_url($this->get_bookings_url()); ?>" class="button"><?php echo esc_html__('Cancel', 'quickslot'); ?></a>
+				</p>
+			</form>
 		</div>
 		<?php
 	}
@@ -271,6 +380,108 @@ final class QS_Bookings_Admin {
 	}
 
 	/**
+	 * Handles CSV export.
+	 */
+	private function handle_export(): void {
+		check_admin_referer('qs_export_bookings_csv');
+
+		$rows = $this->get_bookings_for_export();
+
+		nocache_headers();
+		header('Content-Type: text/csv; charset=utf-8');
+		header('Content-Disposition: attachment; filename="quickslot-bookings-' . gmdate('Y-m-d') . '.csv"');
+
+		$output = fopen('php://output', 'w');
+
+		if (false === $output) {
+			exit;
+		}
+
+		fputcsv($output, array('ID', 'Customer Name', 'Email', 'Phone', 'Service', 'Start', 'End', 'Timezone', 'Status', 'Source', 'Reminder Sent', 'Created'));
+
+		foreach ($rows as $row) {
+			fputcsv(
+				$output,
+				array(
+					(string) $row->id,
+					(string) $row->customer_name,
+					(string) $row->customer_email,
+					(string) $row->customer_phone,
+					(string) $row->service_name,
+					$this->format_utc_datetime_for_display((string) $row->booking_start),
+					$this->format_utc_datetime_for_display((string) $row->booking_end),
+					(string) $row->timezone,
+					$this->get_status_label((string) $row->status),
+					(string) $row->booking_source,
+					! empty($row->reminder_sent) ? '1' : '0',
+					$this->format_local_datetime_for_display((string) $row->created_at),
+				)
+			);
+		}
+
+		fclose($output);
+		exit;
+	}
+
+	/**
+	 * Handles admin booking creation.
+	 */
+	private function handle_admin_booking_create(): void {
+		check_admin_referer('qs_create_admin_booking');
+
+		$form_data = array(
+			'service_id'     => isset($_POST['service_id']) ? absint(wp_unslash($_POST['service_id'])) : 0,
+			'booking_date'   => isset($_POST['booking_date']) ? QS_Sanitizer::text(wp_unslash($_POST['booking_date'])) : '',
+			'booking_time'   => isset($_POST['booking_time']) ? QS_Sanitizer::text(wp_unslash($_POST['booking_time'])) : '',
+			'customer_name'  => isset($_POST['customer_name']) ? QS_Sanitizer::text(wp_unslash($_POST['customer_name'])) : '',
+			'customer_email' => isset($_POST['customer_email']) ? QS_Sanitizer::email(wp_unslash($_POST['customer_email'])) : '',
+			'customer_phone' => isset($_POST['customer_phone']) ? QS_Sanitizer::text(wp_unslash($_POST['customer_phone'])) : '',
+			'customer_note'  => isset($_POST['customer_note']) ? QS_Sanitizer::textarea(wp_unslash($_POST['customer_note'])) : '',
+			'status'         => isset($_POST['status']) ? QS_Sanitizer::text(wp_unslash($_POST['status'])) : 'pending',
+		);
+
+		$errors = $this->validate_admin_booking_data($form_data);
+
+		if (! empty($errors)) {
+			$this->render_add_page($form_data, $errors);
+			exit;
+		}
+
+		$this->ensure_booking_dependencies_loaded();
+
+		$handler = new QS_Booking_Handler();
+		$result  = $handler->create(
+			array(
+				'service_id'     => (int) $form_data['service_id'],
+				'booking_date'   => (string) $form_data['booking_date'],
+				'booking_time'   => (string) $form_data['booking_time'],
+				'customer_name'  => (string) $form_data['customer_name'],
+				'customer_email' => (string) $form_data['customer_email'],
+				'customer_phone' => (string) $form_data['customer_phone'],
+				'customer_note'  => (string) $form_data['customer_note'],
+				'timezone'       => wp_timezone_string(),
+				'booking_source' => 'admin',
+				'status'         => (string) $form_data['status'],
+			)
+		);
+
+		if ($result instanceof WP_Error) {
+			$errors = array($result->get_error_message());
+			$this->render_add_page($form_data, $errors);
+			exit;
+		}
+
+		$booking_id = (int) $result;
+
+		if ('confirmed' === (string) $form_data['status']) {
+			do_action('quickslot_booking_confirmed', $booking_id);
+		}
+
+		wp_safe_redirect($this->get_view_url($booking_id, array('qs_notice' => 'created')));
+		exit;
+	}
+
+	/**
 	 * Gets paginated bookings data.
 	 *
 	 * @return array<string, mixed>
@@ -278,42 +489,14 @@ final class QS_Bookings_Admin {
 	private function get_bookings_page_data(): array {
 		global $wpdb;
 
-		$filters      = $this->get_filters();
+		$query_data   = $this->build_bookings_query_parts();
+		$filters      = $query_data['filters'];
 		$current_page = isset($_GET['paged']) ? max(1, absint(wp_unslash($_GET['paged']))) : 1;
 		$offset       = ($current_page - 1) * self::PER_PAGE;
 		$bookings     = $wpdb->prefix . 'qs_bookings';
 		$services     = $wpdb->prefix . 'qs_services';
-		$where_parts  = array('1=1');
-		$query_args   = array();
-
-		if ('' !== $filters['date_from']) {
-			$where_parts[] = 'b.booking_start >= %s';
-			$query_args[]  = $this->convert_date_to_utc_boundary($filters['date_from'], 'start');
-		}
-
-		if ('' !== $filters['date_to']) {
-			$where_parts[] = 'b.booking_start <= %s';
-			$query_args[]  = $this->convert_date_to_utc_boundary($filters['date_to'], 'end');
-		}
-
-		if ((int) $filters['service_id'] > 0) {
-			$where_parts[] = 'b.service_id = %d';
-			$query_args[]  = (int) $filters['service_id'];
-		}
-
-		if ('' !== $filters['status']) {
-			$where_parts[] = 'b.status = %s';
-			$query_args[]  = $filters['status'];
-		}
-
-		if ('' !== $filters['customer_search']) {
-			$like          = '%' . $wpdb->esc_like($filters['customer_search']) . '%';
-			$where_parts[] = '(b.customer_name LIKE %s OR b.customer_email LIKE %s)';
-			$query_args[]  = $like;
-			$query_args[]  = $like;
-		}
-
-		$where_sql   = 'WHERE ' . implode(' AND ', $where_parts);
+		$query_args   = $query_data['query_args'];
+		$where_sql    = $query_data['where_sql'];
 		$count_query = "SELECT COUNT(b.id) FROM {$bookings} b LEFT JOIN {$services} s ON s.id = b.service_id {$where_sql}";
 		$list_query  = "SELECT b.id, b.customer_name, b.booking_start, b.booking_end, b.status, b.booking_source, b.created_at, COALESCE(s.name, '') AS service_name FROM {$bookings} b LEFT JOIN {$services} s ON s.id = b.service_id {$where_sql} ORDER BY b.booking_start DESC, b.id DESC LIMIT %d OFFSET %d";
 
@@ -338,6 +521,26 @@ final class QS_Bookings_Admin {
 	}
 
 	/**
+	 * Returns bookings for export.
+	 *
+	 * @return array<int, object>
+	 */
+	private function get_bookings_for_export(): array {
+		global $wpdb;
+
+		$query_data = $this->build_bookings_query_parts();
+		$bookings   = $wpdb->prefix . 'qs_bookings';
+		$services   = $wpdb->prefix . 'qs_services';
+		$sql        = "SELECT b.id, b.customer_name, b.customer_email, b.customer_phone, b.booking_start, b.booking_end, b.timezone, b.status, b.booking_source, b.reminder_sent, b.created_at, COALESCE(s.name, '') AS service_name FROM {$bookings} b LEFT JOIN {$services} s ON s.id = b.service_id {$query_data['where_sql']} ORDER BY b.booking_start DESC, b.id DESC";
+
+		$results = empty($query_data['query_args'])
+			? $wpdb->get_results($sql)
+			: $wpdb->get_results($wpdb->prepare($sql, $query_data['query_args']));
+
+		return is_array($results) ? $results : array();
+	}
+
+	/**
 	 * Returns current filter values.
 	 *
 	 * @return array<string, int|string>
@@ -355,6 +558,24 @@ final class QS_Bookings_Admin {
 			'service_id'      => $service_id,
 			'status'          => in_array($status, $this->allowed_statuses, true) ? $status : '',
 			'customer_search' => $customer_search,
+		);
+	}
+
+	/**
+	 * Returns default add-booking form values.
+	 *
+	 * @return array<string, string|int>
+	 */
+	private function get_default_booking_form_data(): array {
+		return array(
+			'service_id'     => 0,
+			'booking_date'   => current_datetime()->format('Y-m-d'),
+			'booking_time'   => '',
+			'customer_name'  => '',
+			'customer_email' => '',
+			'customer_phone' => '',
+			'customer_note'  => '',
+			'status'         => 'pending',
 		);
 	}
 
@@ -397,6 +618,21 @@ final class QS_Bookings_Admin {
 	}
 
 	/**
+	 * Returns active services for manual booking.
+	 *
+	 * @return array<int, object>
+	 */
+	private function get_active_services(): array {
+		global $wpdb;
+
+		$services = $wpdb->prefix . 'qs_services';
+		$sql      = $wpdb->prepare("SELECT id, name FROM {$services} WHERE status = %s ORDER BY name ASC", 'active');
+		$rows     = $wpdb->get_results($sql);
+
+		return is_array($rows) ? $rows : array();
+	}
+
+	/**
 	 * Renders admin notices.
 	 */
 	private function render_notice(): void {
@@ -406,6 +642,7 @@ final class QS_Bookings_Admin {
 
 		$notice_key = QS_Sanitizer::text(wp_unslash($_GET['qs_notice']));
 		$notices    = array(
+			'created'   => array('success', __('Booking created.', 'quickslot')),
 			'updated'   => array('success', __('Booking status updated.', 'quickslot')),
 			'not_found' => array('error', __('Booking not found.', 'quickslot')),
 			'invalid'   => array('error', __('Invalid booking request.', 'quickslot')),
@@ -537,6 +774,16 @@ final class QS_Bookings_Admin {
 	}
 
 	/**
+	 * Returns the export URL.
+	 */
+	private function get_export_url(): string {
+		return wp_nonce_url(
+			$this->get_bookings_url(array_merge($this->get_filters_for_query_args(), array('action' => 'export'))),
+			'qs_export_bookings_csv'
+		);
+	}
+
+	/**
 	 * Returns the requested action.
 	 */
 	private function get_action(): string {
@@ -582,6 +829,134 @@ final class QS_Bookings_Admin {
 				return '' !== $value && 0 !== $value;
 			}
 		);
+	}
+
+	/**
+	 * Returns query SQL and args for the current filters.
+	 *
+	 * @return array<string, array<int, int|string>|string>
+	 */
+	private function build_bookings_query_parts(): array {
+		global $wpdb;
+
+		$filters     = $this->get_filters();
+		$where_parts = array('1=1');
+		$query_args  = array();
+
+		if ('' !== $filters['date_from']) {
+			$where_parts[] = 'b.booking_start >= %s';
+			$query_args[]  = $this->convert_date_to_utc_boundary($filters['date_from'], 'start');
+		}
+
+		if ('' !== $filters['date_to']) {
+			$where_parts[] = 'b.booking_start <= %s';
+			$query_args[]  = $this->convert_date_to_utc_boundary($filters['date_to'], 'end');
+		}
+
+		if ((int) $filters['service_id'] > 0) {
+			$where_parts[] = 'b.service_id = %d';
+			$query_args[]  = (int) $filters['service_id'];
+		}
+
+		if ('' !== $filters['status']) {
+			$where_parts[] = 'b.status = %s';
+			$query_args[]  = $filters['status'];
+		}
+
+		if ('' !== $filters['customer_search']) {
+			$like          = '%' . $wpdb->esc_like($filters['customer_search']) . '%';
+			$where_parts[] = '(b.customer_name LIKE %s OR b.customer_email LIKE %s)';
+			$query_args[]  = $like;
+			$query_args[]  = $like;
+		}
+
+		return array(
+			'filters'    => $filters,
+			'where_sql'  => 'WHERE ' . implode(' AND ', $where_parts),
+			'query_args' => $query_args,
+		);
+	}
+
+	/**
+	 * Validates admin manual booking input.
+	 *
+	 * @param array<string, string|int> $data Form data.
+	 * @return array<int, string>
+	 */
+	private function validate_admin_booking_data(array $data): array {
+		$errors = array();
+		$today  = current_datetime()->format('Y-m-d');
+
+		if ((int) $data['service_id'] < 1 || ! $this->service_is_active((int) $data['service_id'])) {
+			$errors[] = __('Please choose an active service.', 'quickslot');
+		}
+
+		if (! QS_Sanitizer::is_date((string) $data['booking_date'])) {
+			$errors[] = __('Please enter a valid booking date.', 'quickslot');
+		} elseif ((string) $data['booking_date'] < $today) {
+			$errors[] = __('Booking date must be today or later.', 'quickslot');
+		}
+
+		if (! QS_Sanitizer::is_time((string) $data['booking_time'])) {
+			$errors[] = __('Please enter a valid booking time.', 'quickslot');
+		}
+
+		if ('' === (string) $data['customer_name']) {
+			$errors[] = __('Customer name is required.', 'quickslot');
+		}
+
+		if ('' === (string) $data['customer_email'] || ! is_email((string) $data['customer_email'])) {
+			$errors[] = __('Please enter a valid customer email.', 'quickslot');
+		}
+
+		if (! in_array((string) $data['status'], $this->admin_create_statuses, true)) {
+			$errors[] = __('Please choose a valid booking status.', 'quickslot');
+		}
+
+		if (empty($errors)) {
+			$this->ensure_booking_dependencies_loaded();
+			$checker = new QS_Availability_Checker();
+
+			if (! $checker->is_available((int) $data['service_id'], (string) $data['booking_date'], (string) $data['booking_time'])) {
+				$errors[] = __('This time slot is no longer available.', 'quickslot');
+			}
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * Checks whether a service is active.
+	 */
+	private function service_is_active(int $service_id): bool {
+		global $wpdb;
+
+		if ($service_id < 1) {
+			return false;
+		}
+
+		$table = $wpdb->prefix . 'qs_services';
+		$query = $wpdb->prepare("SELECT id FROM {$table} WHERE id = %d AND status = %s LIMIT 1", $service_id, 'active');
+		$row   = $wpdb->get_var($query);
+
+		return null !== $row;
+	}
+
+	/**
+	 * Ensures shared booking classes are available in admin requests.
+	 */
+	private function ensure_booking_dependencies_loaded(): void {
+		if (! class_exists('QS_Slot_Generator', false)) {
+			require_once QUICKSLOT_PATH . 'includes/core/class-qs-slot-generator.php';
+		}
+
+		if (! class_exists('QS_Availability_Checker', false)) {
+			require_once QUICKSLOT_PATH . 'includes/core/class-qs-availability-checker.php';
+		}
+
+		if (! class_exists('QS_Booking_Handler', false)) {
+			require_once QUICKSLOT_PATH . 'includes/core/class-qs-booking-handler.php';
+		}
 	}
 
 	/**

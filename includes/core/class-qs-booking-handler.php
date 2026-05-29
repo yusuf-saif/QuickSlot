@@ -43,9 +43,19 @@ final class QS_Booking_Handler {
 		$customer_phone  = isset($data['customer_phone']) ? (string) $data['customer_phone'] : '';
 		$customer_note   = isset($data['customer_note']) ? (string) $data['customer_note'] : '';
 		$customer_tz     = isset($data['timezone']) ? (string) $data['timezone'] : '';
+		$status          = isset($data['status']) ? (string) $data['status'] : 'pending';
+		$booking_source  = isset($data['booking_source']) ? (string) $data['booking_source'] : 'frontend';
 
 		if (! isset($wpdb) || ! ($wpdb instanceof wpdb)) {
 			return new WP_Error('booking_creation_failed', __('Unable to create the booking right now.', 'quickslot'));
+		}
+
+		if (! in_array($status, array('pending', 'confirmed', 'cancelled', 'completed', 'no-show'), true)) {
+			$status = 'pending';
+		}
+
+		if (! in_array($booking_source, array('frontend', 'admin'), true)) {
+			$booking_source = 'frontend';
 		}
 
 		$service = $this->get_active_service($service_id);
@@ -89,9 +99,9 @@ final class QS_Booking_Handler {
 				'booking_start'       => $start_utc,
 				'booking_end'         => $end_utc,
 				'timezone'            => $timezone_value,
-				'status'              => 'pending',
+				'status'              => $status,
 				'payment_status'      => 'unpaid',
-				'booking_source'      => 'frontend',
+				'booking_source'      => $booking_source,
 				'cancellation_token'  => $cancellation_token,
 			),
 			array(
@@ -127,9 +137,9 @@ final class QS_Booking_Handler {
 			'booking_start'      => $start_utc,
 			'booking_end'        => $end_utc,
 			'timezone'           => $timezone_value,
-			'status'             => 'pending',
+			'status'             => $status,
 			'payment_status'     => 'unpaid',
-			'booking_source'     => 'frontend',
+			'booking_source'     => $booking_source,
 			'cancellation_token' => $cancellation_token,
 		);
 
