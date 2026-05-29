@@ -192,6 +192,45 @@ final class QS_Settings_Admin {
 		$is_connected = $this->google_calendar->is_connected();
 		$is_library_available = $this->google_calendar->is_library_available();
 		?>
+		<details class="notice notice-info inline">
+			<summary><strong><?php echo esc_html__('View Setup Guide', 'quickslot'); ?></strong></summary>
+			<div class="qs-settings-guide-content">
+				<p><?php echo esc_html__('Follow these steps to connect your Google Calendar to QuickSlot. You do not need technical experience to complete this setup.', 'quickslot'); ?></p>
+				<ol>
+					<li>
+						<strong><?php echo esc_html__('Step 1: Create a Google Cloud Project', 'quickslot'); ?></strong><br>
+						<?php echo esc_html__('Open Google Cloud, create a new project, and give it a name for your business booking setup.', 'quickslot'); ?>
+					</li>
+					<li>
+						<strong><?php echo esc_html__('Step 2: Enable Google Calendar API', 'quickslot'); ?></strong><br>
+						<?php echo esc_html__('Inside that project, turn on the Google Calendar API so QuickSlot can create and manage booking events in your calendar.', 'quickslot'); ?>
+					</li>
+					<li>
+						<strong><?php echo esc_html__('Step 3: Create OAuth Credentials', 'quickslot'); ?></strong><br>
+						<?php echo esc_html__('Create OAuth credentials for a web application. Google will give you a Client ID and Client Secret.', 'quickslot'); ?>
+					</li>
+					<li>
+						<strong><?php echo esc_html__('Step 4: Copy Client ID and Client Secret into QuickSlot', 'quickslot'); ?></strong><br>
+						<?php echo esc_html__('Paste those two values into the fields below and save your settings.', 'quickslot'); ?>
+					</li>
+					<li>
+						<strong><?php echo esc_html__('Step 5: Click Connect Google Calendar', 'quickslot'); ?></strong><br>
+						<?php echo esc_html__('After saving, click the connect button so Google can link your account to QuickSlot.', 'quickslot'); ?>
+					</li>
+					<li>
+						<strong><?php echo esc_html__('Step 6: Choose the Google account and approve access', 'quickslot'); ?></strong><br>
+						<?php echo esc_html__('Select the Google account that owns the calendar you want to use, then approve access when Google asks.', 'quickslot'); ?>
+					</li>
+				</ol>
+				<p>
+					<strong><?php echo esc_html__('Official Google guides:', 'quickslot'); ?></strong>
+					<a href="<?php echo esc_url('https://developers.google.com/workspace/guides/create-project'); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Create a Google Cloud project', 'quickslot'); ?></a>,
+					<a href="<?php echo esc_url('https://developers.google.com/workspace/guides/enable-apis'); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Enable APIs', 'quickslot'); ?></a>,
+					<a href="<?php echo esc_url('https://developers.google.com/identity/protocols/oauth2'); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Create OAuth credentials', 'quickslot'); ?></a>
+				</p>
+			</div>
+		</details>
+
 		<form method="post" action="<?php echo esc_url($this->get_settings_url(array('tab' => 'calendar'))); ?>" class="qs-admin-form-card qs-settings-card">
 			<?php wp_nonce_field('qs_save_calendar_settings'); ?>
 
